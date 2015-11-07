@@ -2,7 +2,7 @@
 	<input type="text" class="select-input" />
 	<div class="items">
 		<div class="canvas">
-			<div class="item" ng-repeat="item in select.items">{{ item.name }}</div>
+			<div class="item" ng-repeat="item in select.items track by item.cellId">{{ item.name }}</div>
 		</div>
 	</div>
 </div>
