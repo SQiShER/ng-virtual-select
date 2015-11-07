@@ -1,0 +1,37 @@
+*,
+*:before,
+*:after {
+  box-sizing: border-box;
+}
+
+body {
+  padding: 20px;
+  font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
+}
+
+.select-input {
+  width: 100%;
+  padding: 10px;
+  border-radius: 5px;
+  outline: none;
+  border: 1px solid currentColor;
+  font-size: 14px;
+  color: grey;
+}
+
+.items {
+  display: none;
+  border: 1px solid grey;
+}
+
+.items.open {
+  display: block;
+}
+
+.item {
+  box-sizing: border-box;
+  height: 30px;
+  font-size: 14px;
+  line-height: 18px;
+  padding: 6px 10px;
+}

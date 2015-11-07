@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>ui-virtual-select</title>
+	<link rel="stylesheet" href="src/ui-virtual-select.css">
+</head>
+
+<body>
+
+	<script src="//cdnjs.cloudflare.com/ajax/libs/lodash.js/3.5.0/lodash.min.js"></script>
+	<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+	<script src="//cdnjs.cloudflare.com/ajax/libs/angular.js/1.4.7/angular.min.js"></script>
+	<script src="src/ui-virtual-select.js"></script>
+
+	<div ng-app="app" ng-controller="AppController as app">
+		<p>This is just a proof of concept and not polished at all. Don't judge me!</p>
+
+		<ui-virtual-select options="app.options"></ui-virtual-select>
+	</div>
+
+</body>
+
+</html>
