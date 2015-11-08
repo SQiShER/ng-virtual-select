@@ -1,8 +1,8 @@
 <div class="select">
-	<input type="text" class="select-input" />
+	<input type="text" class="select-input" placeholder="{{ select.selectedItem.name }}" />
 	<div class="items">
 		<div class="canvas">
-			<div class="item" ng-repeat="item in select.items track by item.cellId">{{ item.name }}</div>
+			<div class="item" ng-repeat="item in select.items track by item.cellId" ng-class="{active: select.isActive(item)}" ng-mousemove="select.activate(item, $event)" ng-click="select.select(item)">{{ item.value.name }} ({{ item.index }})</div>
 		</div>
 	</div>
 </div>

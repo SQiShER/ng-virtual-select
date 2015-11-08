@@ -34,4 +34,10 @@ body {
   font-size: 14px;
   line-height: 18px;
   padding: 6px 10px;
+	cursor: pointer;
+	user-select: none;
+}
+
+.item.active {
+	background-color: lightgrey;
 }
