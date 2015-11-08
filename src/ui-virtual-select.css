@@ -9,6 +9,14 @@ body {
   font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
 }
 
+.select .items {
+	display: none;
+}
+
+.select.open .items {
+	display: block;
+}
+
 .select-input {
   width: 100%;
   padding: 10px;
@@ -20,12 +28,7 @@ body {
 }
 
 .items {
-  display: none;
   border: 1px solid grey;
-}
-
-.items.open {
-  display: block;
 }
 
 .item {

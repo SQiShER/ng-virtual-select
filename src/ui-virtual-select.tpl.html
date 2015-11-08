@@ -1,8 +1,8 @@
-<div class="select">
-	<input type="text" class="select-input" placeholder="{{ select.selectedItem.name }}" />
+<div class="select" ng-class="{open: select.isOpen}">
+	<input type="text" class="select-input" placeholder="{{ optionsProvider.displayText(select.selectedItem) }}" />
 	<div class="items">
 		<div class="canvas">
-			<div class="item" ng-repeat="item in select.items track by item.cellId" ng-class="{active: select.isActive(item)}" ng-mousemove="select.activate(item, $event)" ng-click="select.select(item)">{{ item.value.name }} ({{ item.index }})</div>
+			<div class="item" ng-repeat="item in select.items track by item.cellId" ng-class="{active: select.isActive(item)}" ng-mousemove="select.activate(item, $event)" ng-click="select.select(item)">{{ optionsProvider.displayText(item.value) }}</div>
 		</div>
 	</div>
 </div>
