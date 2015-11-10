@@ -230,3 +230,6 @@ angular.module('uiVirtualSelect', [])
       }
     };
   });
+
+angular.module("uiVirtualSelect").run(["$templateCache", function($templateCache) {$templateCache.put("ui-virtual-select.tpl.html","<div class=\"ui-virtual-select\" ng-class=\"{open: select.isOpen}\">\n	<input type=\"text\" class=\"ui-virtual-select--search-input\" placeholder=\"{{ optionsProvider.displayText(select.selectedItem) }}\" />\n	<div class=\"ui-virtual-select--loading-indicator\" ng-if=\"select.loading\">\n		Loading...\n	</div>\n	<div class=\"ui-virtual-select--items\" ng-show=\"select.isOpen\">\n		<div class=\"ui-virtual-select--canvas\">\n			<div class=\"ui-virtual-select--item\" ng-repeat=\"item in select.items track by item.cellId\" ng-class=\"{active: select.isActive(item)}\" ng-mousemove=\"select.activate(item, $event)\" ng-click=\"select.select(item)\">{{ optionsProvider.displayText(item.value) }}</div>\n		</div>\n	</div>\n</div>\n");}]);
+//# sourceMappingURL=ui-virtual-select.js.map

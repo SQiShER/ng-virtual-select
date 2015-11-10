@@ -1,0 +1,27 @@
+{
+  "name": "ng-virtual-select",
+  "version": "1.0.0",
+  "description": "This is a select component with the following set of skills: - virtual scrolling (only renders as many DOM elements as are actually visible) - searchable - single selection - keyboard controls - asynchronous data-fetching via promises",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SQiShER/ng-virtual-select.git"
+  },
+  "author": "Daniel Bechler",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/SQiShER/ng-virtual-select/issues"
+  },
+  "homepage": "https://github.com/SQiShER/ng-virtual-select#readme",
+  "devDependencies": {
+    "del": "^2.0.2",
+    "gulp": "^3.9.0",
+    "gulp-angular-templatecache": "^1.8.0",
+    "gulp-autoprefixer": "^3.1.0",
+    "gulp-concat": "^2.6.0",
+    "gulp-sourcemaps": "^1.6.0"
+  }
+}

@@ -31,6 +31,9 @@
   line-height: 18px;
   padding: 6px 10px;
 	cursor: pointer;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
 	user-select: none;
 }
 
@@ -41,3 +44,5 @@
 /*.select.open .items {
 	display: block;
 }*/
+
+/*# sourceMappingURL=ui-virtual-select.css.map */
