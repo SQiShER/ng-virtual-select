@@ -1,5 +1,7 @@
 [![Build Status](https://travis-ci.org/SQiShER/ng-virtual-select.svg)](https://travis-ci.org/SQiShER/ng-virtual-select)
 
+# ng-virtual-select
+
 This is a select component with the following set of skills:
 
 - virtual scrolling (only renders as many DOM elements as are actually visible)
