@@ -1,10 +1,10 @@
 {
   "name": "ng-virtual-select",
   "version": "1.0.0",
-  "description": "This is a select component with the following set of skills: - virtual scrolling (only renders as many DOM elements as are actually visible) - searchable - single selection - keyboard controls - asynchronous data-fetching via promises",
+  "description": "A searchable, themable, lazy-loading select component capable of handling thousands of options very efficiently by using the virtual scrolling technique. And magic.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "gulp test"
   },
   "repository": {
     "type": "git",
@@ -17,11 +17,28 @@
   },
   "homepage": "https://github.com/SQiShER/ng-virtual-select#readme",
   "devDependencies": {
+    "chai": "^3.4.1",
+    "chai-jquery": "^2.0.0",
     "del": "^2.0.2",
     "gulp": "^3.9.0",
     "gulp-angular-templatecache": "^1.8.0",
     "gulp-autoprefixer": "^3.1.0",
     "gulp-concat": "^2.6.0",
-    "gulp-sourcemaps": "^1.6.0"
+    "gulp-sourcemaps": "^1.6.0",
+    "jquery": "^2.1.4",
+    "karma": "^0.13.15",
+    "karma-chai": "^0.1.0",
+    "karma-chai-sinon": "^0.1.5",
+    "karma-chrome-launcher": "^0.2.1",
+    "karma-firefox-launcher": "^0.1.6",
+    "karma-jquery-chai": "^0.1.3",
+    "karma-mocha": "^0.2.0",
+    "karma-ng-html2js-preprocessor": "^0.2.0",
+    "karma-phantomjs-launcher": "^0.2.1",
+    "karma-safari-launcher": "^0.1.1",
+    "mocha": "^2.3.3",
+    "phantomjs": "^1.9.18",
+    "sinon": "^1.17.2",
+    "sinon-chai": "^2.8.0"
   }
 }

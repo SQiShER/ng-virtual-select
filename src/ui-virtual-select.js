@@ -36,7 +36,7 @@ angular.module('uiVirtualSelect', [])
         var ngModelController = controllers[1];
 
         function detectItemHeight() {
-          var $sampleItem = $('<div class="ui-virtual-select--item">Text</div>').hide().appendTo("body")
+          var $sampleItem = $('<div class="ui-virtual-select--item">Text</div>').hide().appendTo("body");
           var height = $sampleItem.outerHeight();
           $sampleItem.remove();
           return height;
@@ -197,7 +197,7 @@ angular.module('uiVirtualSelect', [])
 
         var closeOnBlur = true;
 
-        elem.find('.ui-virtual-select--search-input').on('blur', function(event) {
+        elem.find('.ui-virtual-select--search-input').on('blur', function() {
           if (closeOnBlur) {
             hideItemList();
             scope.$apply();

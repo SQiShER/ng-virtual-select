@@ -4,7 +4,8 @@ const gulp = require('gulp'),
   concat = require('gulp-concat'),
   templateCache = require('gulp-angular-templatecache'),
   del = require('del'),
-  path = require('path');
+  path = require('path'),
+  KarmaServer = require('karma').Server;
 
 const options = {
   tempDir: '.tmp/',
@@ -36,6 +37,13 @@ gulp.task('javascript', ['templates'], () => {
     .pipe(concat('ui-virtual-select.js'))
     .pipe(sourcemaps.write('.'))
     .pipe(gulp.dest(options.buildDir));
+});
+
+gulp.task('test', (done) => {
+  new KarmaServer({
+    configFile: __dirname + '/karma.conf.js',
+    singleRun: true
+  }, done).start();
 });
 
 gulp.task('clean', () => {
