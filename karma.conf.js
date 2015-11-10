@@ -32,7 +32,9 @@ module.exports = function(config) {
     // preprocess matching files before serving them to the browser
     // available preprocessors: https://npmjs.org/browse/keyword/karma-preprocessor
     preprocessors: {
-      'src/*.html': ['ng-html2js']
+      'src/*.html': ['ng-html2js'],
+      'src/*.js': ['babel'],
+      'test/*.js': ['babel']
     },
 
 
@@ -76,6 +78,21 @@ module.exports = function(config) {
     ngHtml2JsPreprocessor: {
       // strip this from the file path
       stripPrefix: 'src/',
+    },
+
+
+    babelPreprocessor: {
+      options: {
+        presets: ['es2015'],
+        sourceMap: 'inline'
+      }
+    // ,
+    // filename: function(file) {
+    //   return file.originalPath.replace(/\.js$/, '.es5.js');
+    // },
+    // sourceFileName: function(file) {
+    //   return file.originalPath;
+    // }
     }
 
   })

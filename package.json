@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/SQiShER/ng-virtual-select#readme",
   "devDependencies": {
+    "babel-preset-es2015": "^6.1.2",
     "chai": "^3.4.1",
     "chai-jquery": "^2.0.0",
     "del": "^2.0.2",
@@ -27,6 +28,7 @@
     "gulp-sourcemaps": "^1.6.0",
     "jquery": "^2.1.4",
     "karma": "^0.13.15",
+    "karma-babel-preprocessor": "^6.0.1",
     "karma-chai": "^0.1.0",
     "karma-chai-sinon": "^0.1.5",
     "karma-chrome-launcher": "^0.2.1",
