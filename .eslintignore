@@ -1,3 +1,4 @@
 .gulpfile
 karma.conf.js
+protractor.conf.js
 package.json

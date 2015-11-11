@@ -21,6 +21,10 @@
 		<ui-virtual-select ng-model="app.selection" ui-options-provider="app.uiVirtualSelectDataProvider"></ui-virtual-select>
 
 		<p>{{ app.selection }}</p>
+
+		<p>
+			<input type="button" ng-click="app.resetSelection()" value="Reset selection">
+		</p>
 	</div>
 
 </body>

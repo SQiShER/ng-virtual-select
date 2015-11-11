@@ -3,7 +3,8 @@
 		"expect": true,
 		"assert": true,
 		"module": true,
-		"inject": true
+		"inject": true,
+		"sinon": true
 	},
 	"env": {
 		"browser": true,

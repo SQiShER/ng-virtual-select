@@ -3,13 +3,20 @@
 angular.module('app', ['uiVirtualSelect'])
 
   .controller('AppController', function($scope, $timeout, uiVirtualSelectDataProvider) {
+    var self = this;
     this.selection = {
       id: '500',
       name: '500'
     };
     this.uiVirtualSelectDataProvider = uiVirtualSelectDataProvider;
-
-    $timeout(function () {
+    this.resetSelection = function() {
+      console.log('resetting selection...');
+      self.selection = {
+        id: '500',
+        name: '500'
+      };
+    };
+    $timeout(function() {
       $scope.$broadcast('ui-virtual-select:focus');
     });
   })
@@ -19,13 +26,13 @@ angular.module('app', ['uiVirtualSelect'])
       this.availableItems = null;
       this.items = null;
     };
-    DataProvider.prototype.load = function () {
+    DataProvider.prototype.load = function() {
       var deferred = $q.defer();
       var self = this;
       if (this.availableItems) {
         deferred.resolve();
       } else {
-        $timeout(function () {
+        $timeout(function() {
           self.availableItems = [];
           for (var i = 1; i < 1000; i++) {
             self.availableItems.push({
