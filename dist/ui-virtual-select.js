@@ -90,7 +90,6 @@ angular.module('uiVirtualSelect', [])
         var searchInputKeyupHandler = function(event) {
           var search = $(event.target).val();
           if (search !== previousSearch) {
-            console.log('1');
             scope.optionsProvider.filter(search);
             previousSearch = search;
             uiVirtualSelectController.activeItemIndex = 0;
@@ -114,12 +113,7 @@ angular.module('uiVirtualSelect', [])
         var documentMousedownHandler = function(event) {
           var targetBelongsToThisComponent = $.contains(elem[0], event.target);
           if (targetBelongsToThisComponent) {
-            var targetIsItem = $(event.target).hasClass('ui-virtual-select--item');
-            if (targetIsItem) {
-              closeOnBlur = false;
-            } else {
-              closeOnBlur = true;
-            }
+            closeOnBlur = false;
           } else {
             closeOnBlur = true;
             cancel();
@@ -131,9 +125,16 @@ angular.module('uiVirtualSelect', [])
             uiVirtualSelectController.loading = true;
           });
           scope.optionsProvider.load().then(function() {
+            var selectedIndex = indexOfItem(uiVirtualSelectController.selectedItem);
+            uiVirtualSelectController.isOpen = true;
+            uiVirtualSelectController.activate({
+              index: selectedIndex
+            });
             updateItemList();
-            showItemList();
             uiVirtualSelectController.loading = false;
+            $timeout(function() {
+              scrollTo(selectedIndex);
+            }, 100);
           });
           $searchInput.on('keydown', searchInputKeydownHandler);
           $searchInput.on('keyup', searchInputKeyupHandler);
@@ -168,24 +169,14 @@ angular.module('uiVirtualSelect', [])
           uiVirtualSelectController.select(selectedItem);
         }
 
-        function showItemList() {
-          var selectedIndex = indexOfItem(uiVirtualSelectController.selectedItem);
-          uiVirtualSelectController.isOpen = true;
-          uiVirtualSelectController.activate({
-            index: selectedIndex
-          });
-          $timeout(function() {
-            scrollTo(selectedIndex);
-          });
-        }
-
         function hideItemList() {
           uiVirtualSelectController.isOpen = false;
           scope.onCloseCallback();
         }
 
         function scrollTo(index) {
-          elem.find('.ui-virtual-select--items').scrollTop(cellHeight * Math.max(0, index));
+          scrollTop = Math.max(0, index * cellHeight);
+          elem.find('.ui-virtual-select--items').scrollTop(scrollTop);
         }
 
         function cancel() {
@@ -208,7 +199,7 @@ angular.module('uiVirtualSelect', [])
 
         function updateItemList() {
           var firstItem = Math.max(Math.floor(scrollTop / cellHeight) - cellsPerPage, 0);
-          var lastItem = firstItem + numberOfCells;
+          var lastItem = Math.min(firstItem + numberOfCells, scope.optionsProvider.size());
           uiVirtualSelectController.items = _.map(scope.optionsProvider.get(firstItem, lastItem), function(value, index) {
             return {
               cellId: index,
