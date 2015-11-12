@@ -5,10 +5,10 @@ describe('directive', () => {
   let Context;
 
   class MockOptionsProvider {
-    constructor() {
+    constructor($q) {
       this.availableItems = [];
       this.items = [];
-      this.deferredLoad = Context.$q.defer();
+      this.deferredLoad = $q.defer();
     }
     load() {
       return this.deferredLoad.promise;
@@ -49,6 +49,9 @@ describe('directive', () => {
       let {firstname, lastname} = item;
       return `${lastname}, ${firstname}`;
     }
+    noSelectionText() {
+      return `none`;
+    }
   }
 
   beforeEach(module('uiVirtualSelect'));
@@ -66,7 +69,7 @@ describe('directive', () => {
     Context.$style.remove();
   });
 
-  function createDirective() {
+  function createDirective({selection = null, optionsProvider = {}} = {}) {
     let styleElement = $(`<style type="text/css">
     .ui-virtual-select--item {
       line-height: 16px;
@@ -78,8 +81,8 @@ describe('directive', () => {
     $(document.body).append($element);
     let $scope = Context.$rootScope.$new();
     $scope.data = {
-      selection: null,
-      optionsProvider: {}
+      selection: selection,
+      optionsProvider: optionsProvider
     }
     Context.$compile($element)($scope);
     Context.$element = $element;
@@ -165,7 +168,7 @@ describe('directive', () => {
   describe(`option list:`, () => {
     beforeEach(() => {
       createDirective();
-      Context.$scope.data.optionsProvider = new MockOptionsProvider();
+      Context.$scope.data.optionsProvider = new MockOptionsProvider(Context.$q);
       Context.$scope.$digest();
       Context.$element.find('.ui-virtual-select--search-input').focus();
     });
@@ -214,6 +217,34 @@ describe('directive', () => {
         it(`.ui-virtual-select--canvas margin-top should equal the computed height of all items that have been scrolled out of view`, () => {
           expect(Context.$element.find('.ui-virtual-select--canvas')).to.have.css('margin-top', (5 * itemHeight) + 'px');
         });
+      });
+    });
+  });
+
+  describe(`search input:`, () => {
+    let optionsProvider;
+    const noSelectionText = 'no selection text';
+    beforeEach(() => {
+      optionsProvider = new MockOptionsProvider(Context.$q);
+      createDirective({
+        optionsProvider: optionsProvider
+      });
+      sinon.stub(optionsProvider, 'displayText');
+      sinon.stub(optionsProvider, 'noSelectionText').returns(noSelectionText);
+      Context.$scope.$digest();
+    });
+    describe(`given no initial selection`, () => {
+      it(`displayText should not be called`, () => {
+        expect(Context.$scope.data.optionsProvider.displayText).not.to.have.been.called;
+      });
+      it(`placeholder should contain text from optionsProvider.noSelectionText()`, () => {
+        expect(Context.$scope.data.optionsProvider.noSelectionText).to.have.been.called;
+        expect(Context.$element.find('.ui-virtual-select--search-input')).to.have.attr('placeholder', noSelectionText);
+      });
+      it(`placeholder should be empty if optionsProvider.noSelectionText() does not exist`, () => {
+        optionsProvider.noSelectionText = null;
+        Context.$scope.$digest();
+        expect(Context.$element.find('.ui-virtual-select--search-input')).to.have.attr('placeholder', '');
       });
     });
   });

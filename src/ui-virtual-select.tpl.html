@@ -1,5 +1,5 @@
-<div class="ui-virtual-select" ng-class="{open: select.isOpen}">
-	<input type="text" class="ui-virtual-select--search-input" placeholder="{{ optionsProvider.displayText(select.selectedItem) }}" />
+<div class="ui-virtual-select" ng-class="{open: select.isOpen, loading: select.loading}">
+	<input type="text" class="ui-virtual-select--search-input" ng-focus="select.searchInputFocusHandler($event)" placeholder="{{ select.formatSearchInput(select.selectedItem) }}" />
 	<div class="ui-virtual-select--loading-indicator" ng-if="select.loading">
 		Loading...
 	</div>

@@ -2,7 +2,7 @@
 
 angular.module('uiVirtualSelect', [])
 
-  .directive('uiVirtualSelect', function($timeout, $document) {
+  .directive('uiVirtualSelect', ['$timeout', '$document', '$window', function($timeout, $document, $window) {
     return {
       restrict: 'E',
       require: ['uiVirtualSelect', 'ngModel'],
@@ -57,23 +57,7 @@ angular.module('uiVirtualSelect', [])
 
         var $searchInput = elem.find('.ui-virtual-select--search-input');
 
-        uiVirtualSelectController.select = function(item) {
-          uiVirtualSelectController.selectedItem = item.value;
-          ngModelController.$setViewValue(uiVirtualSelectController.selectedItem);
-          scope.onSelectCallback({
-            selection: item.value
-          });
-          hideItemList();
-          clearInput();
-        };
-
-        elem.find('.ui-virtual-select--items').on('scroll', function() {
-          scrollTop = elem.find('.ui-virtual-select--items').scrollTop();
-          updateItemList();
-          scope.$apply();
-        });
-
-        var searchInputKeydownHandler = function(event) {
+        function searchInputKeydownHandler(event) {
           var key = event.which;
           if (key === ArrowUp) {
             moveUp();
@@ -85,9 +69,9 @@ angular.module('uiVirtualSelect', [])
             cancel();
           }
           scope.$apply();
-        };
+        }
 
-        var searchInputKeyupHandler = function(event) {
+        function searchInputKeyupHandler(event) {
           var search = $(event.target).val();
           if (search !== previousSearch) {
             scope.optionsProvider.filter(search);
@@ -97,9 +81,9 @@ angular.module('uiVirtualSelect', [])
             scrollTo(0);
           }
           scope.$apply();
-        };
+        }
 
-        var searchInputBlurHandler = function() {
+        function searchInputBlurHandler() {
           if (closeOnBlur) {
             hideItemList();
             scope.$apply();
@@ -108,9 +92,9 @@ angular.module('uiVirtualSelect', [])
           $searchInput.off('keyup', searchInputKeyupHandler);
           $searchInput.off('blur', searchInputBlurHandler);
           $document.off('mousedown', documentMousedownHandler);
-        };
+        }
 
-        var documentMousedownHandler = function(event) {
+        function documentMousedownHandler(event) {
           var targetBelongsToThisComponent = $.contains(elem[0], event.target);
           if (targetBelongsToThisComponent) {
             closeOnBlur = false;
@@ -118,29 +102,7 @@ angular.module('uiVirtualSelect', [])
             closeOnBlur = true;
             cancel();
           }
-        };
-
-        elem.find('.ui-virtual-select--search-input').on('focus', function() {
-          scope.$apply(function() {
-            uiVirtualSelectController.loading = true;
-          });
-          scope.optionsProvider.load().then(function() {
-            var selectedIndex = indexOfItem(uiVirtualSelectController.selectedItem);
-            uiVirtualSelectController.isOpen = true;
-            uiVirtualSelectController.activate({
-              index: selectedIndex
-            });
-            updateItemList();
-            uiVirtualSelectController.loading = false;
-            $timeout(function() {
-              scrollTo(selectedIndex);
-            }, 100);
-          });
-          $searchInput.on('keydown', searchInputKeydownHandler);
-          $searchInput.on('keyup', searchInputKeyupHandler);
-          $searchInput.on('blur', searchInputBlurHandler);
-          $document.on('mousedown', documentMousedownHandler);
-        });
+        }
 
         function moveUp() {
           var firstVisibleItem = Math.ceil((scrollTop + cellHeight) / cellHeight) - 1;
@@ -170,12 +132,14 @@ angular.module('uiVirtualSelect', [])
         }
 
         function hideItemList() {
-          uiVirtualSelectController.isOpen = false;
+          scope.$evalAsync(function() {
+            uiVirtualSelectController.isOpen = false;
+          });
           scope.onCloseCallback();
         }
 
         function scrollTo(index) {
-          scrollTop = Math.max(0, index * cellHeight);
+          scrollTop = Math.max(0, index) * cellHeight;
           elem.find('.ui-virtual-select--items').scrollTop(scrollTop);
         }
 
@@ -217,9 +181,70 @@ angular.module('uiVirtualSelect', [])
           });
         }
 
+        elem.find('.ui-virtual-select--items').on('scroll', function() {
+          scrollTop = elem.find('.ui-virtual-select--items').scrollTop();
+          updateItemList();
+          scope.$apply();
+        });
+
         scope.$on('ui-virtual-select:focus', function() {
           elem.find('.ui-virtual-select--search-input').focus();
         });
+
+        function performAfterRender(callback) {
+          if ($window.requestAnimationFrame) {
+            $window.requestAnimationFrame(callback);
+          } else {
+            $timeout(callback, 100);
+          }
+        }
+
+        function adjustScrollPosition() {
+          var scrollIndex = 0;
+          if (uiVirtualSelectController.selectedItem) {
+            scrollIndex = indexOfItem(uiVirtualSelectController.selectedItem);
+          }
+          uiVirtualSelectController.activate({
+            index: scrollIndex
+          });
+          scrollTo(scrollIndex);
+        }
+
+        uiVirtualSelectController.select = function(item) {
+          uiVirtualSelectController.selectedItem = item.value;
+          ngModelController.$setViewValue(uiVirtualSelectController.selectedItem);
+          scope.onSelectCallback({
+            selection: item.value
+          });
+          hideItemList();
+          clearInput();
+        };
+
+        uiVirtualSelectController.searchInputFocusHandler = function() {
+          uiVirtualSelectController.loading = true;
+          scope.optionsProvider.load().then(function() {
+            updateItemList();
+            uiVirtualSelectController.loading = false;
+            uiVirtualSelectController.isOpen = true;
+            performAfterRender(adjustScrollPosition);
+          });
+          $searchInput.on('keydown', searchInputKeydownHandler);
+          $searchInput.on('keyup', searchInputKeyupHandler);
+          $searchInput.on('blur', searchInputBlurHandler);
+          $document.on('mousedown', documentMousedownHandler);
+        };
+
+        uiVirtualSelectController.formatSearchInput = function(item) {
+          if (item) {
+            return scope.optionsProvider.displayText(item);
+          } else {
+            if (scope.optionsProvider.noSelectionText) {
+              return scope.optionsProvider.noSelectionText();
+            } else {
+              return '';
+            }
+          }
+        };
 
         ngModelController.$render = function() {
           uiVirtualSelectController.selectedItem = ngModelController.$viewValue;
@@ -231,7 +256,7 @@ angular.module('uiVirtualSelect', [])
         onCloseCallback: '&uiOnClose'
       }
     };
-  });
+  }]);
 
-angular.module("uiVirtualSelect").run(["$templateCache", function($templateCache) {$templateCache.put("ui-virtual-select.tpl.html","<div class=\"ui-virtual-select\" ng-class=\"{open: select.isOpen}\">\n	<input type=\"text\" class=\"ui-virtual-select--search-input\" placeholder=\"{{ optionsProvider.displayText(select.selectedItem) }}\" />\n	<div class=\"ui-virtual-select--loading-indicator\" ng-if=\"select.loading\">\n		Loading...\n	</div>\n	<div class=\"ui-virtual-select--items\" ng-show=\"select.isOpen\">\n		<div class=\"ui-virtual-select--canvas\">\n			<div class=\"ui-virtual-select--item\" ng-repeat=\"item in select.items track by item.cellId\" ng-class=\"{active: select.isActive(item)}\" ng-mousemove=\"select.activate(item, $event)\" ng-click=\"select.select(item)\">{{ optionsProvider.displayText(item.value) }}</div>\n		</div>\n	</div>\n</div>");}]);
+angular.module("uiVirtualSelect").run(["$templateCache", function($templateCache) {$templateCache.put("ui-virtual-select.tpl.html","<div class=\"ui-virtual-select\" ng-class=\"{open: select.isOpen, loading: select.loading}\">\n	<input type=\"text\" class=\"ui-virtual-select--search-input\" ng-focus=\"select.searchInputFocusHandler($event)\" placeholder=\"{{ select.formatSearchInput(select.selectedItem) }}\" />\n	<div class=\"ui-virtual-select--loading-indicator\" ng-if=\"select.loading\">\n		Loading...\n	</div>\n	<div class=\"ui-virtual-select--items\" ng-show=\"select.isOpen\">\n		<div class=\"ui-virtual-select--canvas\">\n			<div class=\"ui-virtual-select--item\" ng-repeat=\"item in select.items track by item.cellId\" ng-class=\"{active: select.isActive(item)}\" ng-mousemove=\"select.activate(item, $event)\" ng-click=\"select.select(item)\">{{ optionsProvider.displayText(item.value) }}</div>\n		</div>\n	</div>\n</div>");}]);
 //# sourceMappingURL=ui-virtual-select.js.map

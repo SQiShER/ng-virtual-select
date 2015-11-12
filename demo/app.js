@@ -2,26 +2,20 @@
 
 angular.module('app', ['uiVirtualSelect'])
 
-  .controller('AppController', function($scope, $timeout, uiVirtualSelectDataProvider) {
+  .controller('AppController', ['$scope', '$timeout', 'uiVirtualSelectDataProvider', function($scope, $timeout, uiVirtualSelectDataProvider) {
+    var intitialSelection = null;
     var self = this;
-    this.selection = {
-      id: '500',
-      name: '500'
-    };
+    this.selection = intitialSelection;
     this.uiVirtualSelectDataProvider = uiVirtualSelectDataProvider;
     this.resetSelection = function() {
-      console.log('resetting selection...');
-      self.selection = {
-        id: '500',
-        name: '500'
-      };
+      self.selection = intitialSelection;
     };
-    $timeout(function() {
+    this.focusInput = function() {
       $scope.$broadcast('ui-virtual-select:focus');
-    });
-  })
+    };
+  }])
 
-  .factory('uiVirtualSelectDataProvider', function($q, $timeout) {
+  .factory('uiVirtualSelectDataProvider', ['$q', '$timeout', function($q, $timeout) {
     var DataProvider = function() {
       this.availableItems = null;
       this.items = null;
@@ -67,5 +61,8 @@ angular.module('app', ['uiVirtualSelect'])
     DataProvider.prototype.displayText = function(item) {
       return item && item.name;
     };
+    DataProvider.prototype.noSelectionText = function() {
+      return 'Please choose';
+    };
     return new DataProvider();
-  });
+  }]);
