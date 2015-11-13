@@ -85,7 +85,7 @@ angular.module('uiVirtualSelect', [])
 
         function searchInputBlurHandler() {
           if (closeOnBlur) {
-            hideItemList();
+            hideItems();
             scope.$apply();
           }
           $searchInput.off('keydown', searchInputKeydownHandler);
@@ -131,13 +131,6 @@ angular.module('uiVirtualSelect', [])
           uiVirtualSelectController.select(selectedItem);
         }
 
-        function hideItemList() {
-          scope.$evalAsync(function() {
-            uiVirtualSelectController.isOpen = false;
-          });
-          scope.onCloseCallback();
-        }
-
         function scrollTo(index) {
           scrollTop = Math.max(0, index) * cellHeight;
           elem.find('.ui-virtual-select--items').scrollTop(scrollTop);
@@ -145,7 +138,7 @@ angular.module('uiVirtualSelect', [])
 
         function cancel() {
           clearInput();
-          hideItemList();
+          hideItems();
           uiVirtualSelectController.activeItemIndex = 0;
         }
 
@@ -216,23 +209,38 @@ angular.module('uiVirtualSelect', [])
           scope.onSelectCallback({
             selection: item.value
           });
-          hideItemList();
+          hideItems();
           clearInput();
         };
 
         uiVirtualSelectController.searchInputFocusHandler = function() {
           uiVirtualSelectController.loading = true;
           scope.optionsProvider.load().then(function() {
-            updateItemList();
             uiVirtualSelectController.loading = false;
-            uiVirtualSelectController.isOpen = true;
-            performAfterRender(adjustScrollPosition);
+            updateItemList();
+            showItems();
+            scope.$evalAsync(adjustScrollPosition);
           });
           $searchInput.on('keydown', searchInputKeydownHandler);
           $searchInput.on('keyup', searchInputKeyupHandler);
           $searchInput.on('blur', searchInputBlurHandler);
           $document.on('mousedown', documentMousedownHandler);
         };
+
+        function hideItems() {
+          elem.find('.ui-virtual-select--items').css('display', 'none');
+          scope.$evalAsync(function() {
+            uiVirtualSelectController.isOpen = false;
+          });
+          scope.onCloseCallback();
+        }
+
+        function showItems() {
+          elem.find('.ui-virtual-select--items').css('display', 'block');
+          scope.$evalAsync(function() {
+            uiVirtualSelectController.isOpen = true;
+          });
+        }
 
         uiVirtualSelectController.formatSearchInput = function(item) {
           if (item) {
@@ -258,5 +266,5 @@ angular.module('uiVirtualSelect', [])
     };
   }]);
 
-angular.module("uiVirtualSelect").run(["$templateCache", function($templateCache) {$templateCache.put("ui-virtual-select.tpl.html","<div class=\"ui-virtual-select\" ng-class=\"{open: select.isOpen, loading: select.loading}\">\n	<input type=\"text\" class=\"ui-virtual-select--search-input\" ng-focus=\"select.searchInputFocusHandler($event)\" placeholder=\"{{ select.formatSearchInput(select.selectedItem) }}\" />\n	<div class=\"ui-virtual-select--loading-indicator\" ng-if=\"select.loading\">\n		Loading...\n	</div>\n	<div class=\"ui-virtual-select--items\" ng-show=\"select.isOpen\">\n		<div class=\"ui-virtual-select--canvas\">\n			<div class=\"ui-virtual-select--item\" ng-repeat=\"item in select.items track by item.cellId\" ng-class=\"{active: select.isActive(item)}\" ng-mousemove=\"select.activate(item, $event)\" ng-click=\"select.select(item)\">{{ optionsProvider.displayText(item.value) }}</div>\n		</div>\n	</div>\n</div>");}]);
+angular.module("uiVirtualSelect").run(["$templateCache", function($templateCache) {$templateCache.put("ui-virtual-select.tpl.html","<div class=\"ui-virtual-select\" ng-class=\"{open: select.isOpen, loading: select.loading}\">\n	<input type=\"text\" class=\"ui-virtual-select--search-input\" ng-focus=\"select.searchInputFocusHandler($event)\" placeholder=\"{{ select.formatSearchInput(select.selectedItem) }}\" />\n	<div class=\"ui-virtual-select--loading-indicator\" ng-if=\"select.loading\">\n		Loading...\n	</div>\n	<div class=\"ui-virtual-select--items\">\n		<div class=\"ui-virtual-select--canvas\">\n			<div class=\"ui-virtual-select--item\" ng-repeat=\"item in select.items track by item.cellId\" ng-class=\"{active: select.isActive(item)}\" ng-mousemove=\"select.activate(item, $event)\" ng-click=\"select.select(item)\">{{ optionsProvider.displayText(item.value) }}</div>\n		</div>\n	</div>\n</div>\n");}]);
 //# sourceMappingURL=ui-virtual-select.js.map

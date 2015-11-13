@@ -3,7 +3,7 @@
 	<div class="ui-virtual-select--loading-indicator" ng-if="select.loading">
 		Loading...
 	</div>
-	<div class="ui-virtual-select--items" ng-show="select.isOpen">
+	<div class="ui-virtual-select--items">
 		<div class="ui-virtual-select--canvas">
 			<div class="ui-virtual-select--item" ng-repeat="item in select.items track by item.cellId" ng-class="{active: select.isActive(item)}" ng-mousemove="select.activate(item, $event)" ng-click="select.select(item)">{{ optionsProvider.displayText(item.value) }}</div>
 		</div>
