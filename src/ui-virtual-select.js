@@ -2,38 +2,32 @@
 
 angular.module('uiVirtualSelect', [])
 
-  .directive('uiVirtualSelect', ['$timeout', '$document', '$window', function($timeout, $document, $window) {
+  .directive('uiVirtualSelect', ['$timeout', '$document', function($timeout, $document) {
     return {
       restrict: 'E',
       require: ['uiVirtualSelect', 'ngModel'],
       templateUrl: 'ui-virtual-select.tpl.html',
       controller: function() {
-        var lastKnownMousePosition = {
-          x: 0,
-          y: 0
-        };
-        this.items = [];
-        this.search = '';
-        this.activeItemIndex = 0;
-        this.isOpen = false;
-        this.loading = false;
-        this.activate = function(item, $event) {
-          if (!$event) {
-            this.activeItemIndex = item.index;
-          } else if ($event.pageX !== lastKnownMousePosition.x || $event.pageY !== lastKnownMousePosition.y) {
-            // workaround to prevent scripted scrolling from triggering mousemove events
-            lastKnownMousePosition.x = $event.pageX;
-            lastKnownMousePosition.y = $event.pageY;
-            this.activeItemIndex = item.index;
+        var self = this;
+        self.items = [];
+        self.search = '';
+        self.isOpen = false;
+        self.isLoading = false;
+        self.formatSearchInput = function(item) {
+          if (item) {
+            return self.optionsProvider.displayText(item);
+          } else {
+            if (self.optionsProvider.noSelectionText) {
+              return self.optionsProvider.noSelectionText();
+            } else {
+              return '';
+            }
           }
-        };
-        this.isActive = function(item) {
-          return item.index === this.activeItemIndex;
         };
       },
       controllerAs: 'select',
       transclude: true,
-      compile: function () {
+      compile: function() {
         return function(scope, elem, attrs, controllers, $transclude) {
           var uiVirtualSelectController = controllers[0];
           var ngModelController = controllers[1];
@@ -45,20 +39,32 @@ angular.module('uiVirtualSelect', [])
             return height;
           }
 
-          var ArrowUp = 38;
-          var ArrowDown = 40;
-          var Enter = 13;
-          var Escape = 27;
+          var Keys = {
+            ArrowUp: 38,
+            ArrowDown: 40,
+            Enter: 13,
+            Escape: 27
+          };
 
-          var cellsPerPage = 10;
-          var cellHeight = detectItemHeight();
-          var numberOfCells = 3 * cellsPerPage;
+          var options = {
+            itemHeight: detectItemHeight(),
+            itemsVisible: 10,
+            itemsRendered: 30
+          };
+
+          var lastKnownMousePosition = {
+            x: 0,
+            y: 0
+          };
           var scrollTop = 0;
           var previousSearch = '';
           var closeOnBlur = true;
+          var activeItemIndex = 0;
 
+          // var $select = elem.find('.ui-virtual-select');
           var $searchInput = elem.find('.ui-virtual-select--search-input');
           var $items = elem.find('.ui-virtual-select--items');
+          var $canvas = elem.find('.ui-virtual-select--canvas');
           var $loadingIndicator = elem.find('.ui-virtual-select--loading-indicator');
 
           $items.hide();
@@ -69,36 +75,68 @@ angular.module('uiVirtualSelect', [])
             $loadingIndicator.append(loadingIndicatorTemplate);
           }
 
-          function searchInputKeydownHandler(event) {
-            var key = event.which;
-            if (key === ArrowUp) {
-              moveUp();
-            } else if (key === ArrowDown) {
-              moveDown();
-            } else if (key === Enter) {
-              onEnter();
-            } else if (key === Escape) {
-              cancel();
+          function activatePreviousItem() {
+            var firstVisibleItem = Math.ceil((scrollTop + options.itemHeight) / options.itemHeight) - 1;
+            if (activeItemIndex > 0) {
+              activeItemIndex--;
+              updateItemList();
+              if (activeItemIndex < firstVisibleItem) {
+                scrollTo(Math.ceil(scrollTop / options.itemHeight) - 1);
+              }
             }
-            scope.$apply();
+          }
+
+          function activateNextItem() {
+            var lastVisibleItem = Math.floor((scrollTop + options.itemHeight) / options.itemHeight) + options.itemsVisible - 1;
+            if (activeItemIndex < uiVirtualSelectController.optionsProvider.size() - 1) {
+              activeItemIndex++;
+              updateItemList();
+              if (activeItemIndex >= lastVisibleItem) {
+                scrollTo(Math.floor(scrollTop / options.itemHeight) + 1);
+              }
+            }
+          }
+
+          function selectActiveItem() {
+            selectItem(activeItemIndex);
+          }
+
+          function cancel() {
+            clearSearchInput();
+            hideItems();
+            activeItemIndex = 0;
+          }
+
+          function searchInputKeydownHandler(event) {
+            switch (event.which) {
+              case Keys.ArrowUp:
+                return activatePreviousItem();
+              case Keys.ArrowDown:
+                return activateNextItem();
+              case Keys.Enter:
+                return selectActiveItem();
+              case Keys.Escape:
+                return cancel();
+              default:
+                closeOnBlur = true;
+            }
           }
 
           function searchInputKeyupHandler(event) {
             var search = $(event.target).val();
             if (search !== previousSearch) {
-              scope.optionsProvider.filter(search);
+              uiVirtualSelectController.optionsProvider.filter(search);
               previousSearch = search;
-              uiVirtualSelectController.activeItemIndex = 0;
+              activeItemIndex = 0;
               updateItemList();
               scrollTo(0);
             }
-            scope.$apply();
           }
 
           function searchInputBlurHandler() {
             if (closeOnBlur) {
+              clearSearchInput(true);
               hideItems();
-              scope.$apply();
             }
             $searchInput.off('keydown', searchInputKeydownHandler);
             $searchInput.off('keyup', searchInputKeyupHandler);
@@ -112,123 +150,103 @@ angular.module('uiVirtualSelect', [])
               closeOnBlur = false;
             } else {
               closeOnBlur = true;
-              cancel();
             }
-          }
-
-          function moveUp() {
-            var firstVisibleItem = Math.ceil((scrollTop + cellHeight) / cellHeight) - 1;
-            if (uiVirtualSelectController.activeItemIndex > 0) {
-              uiVirtualSelectController.activeItemIndex--;
-              if (uiVirtualSelectController.activeItemIndex < firstVisibleItem) {
-                scrollTo(Math.ceil(scrollTop / cellHeight) - 1);
-              }
-            }
-          }
-
-          function moveDown() {
-            var lastVisibleItem = Math.floor((scrollTop + cellHeight) / cellHeight) + cellsPerPage - 1;
-            if (uiVirtualSelectController.activeItemIndex < scope.optionsProvider.size() - 1) {
-              uiVirtualSelectController.activeItemIndex++;
-              if (uiVirtualSelectController.activeItemIndex >= lastVisibleItem) {
-                scrollTo(Math.floor(scrollTop / cellHeight) + 1);
-              }
-            }
-          }
-
-          function onEnter() {
-            var selectedItem = _.find(uiVirtualSelectController.items, function(item) {
-              return item.index === uiVirtualSelectController.activeItemIndex;
-            });
-            uiVirtualSelectController.select(selectedItem);
           }
 
           function scrollTo(index) {
-            scrollTop = Math.max(0, index) * cellHeight;
-            elem.find('.ui-virtual-select--items').scrollTop(scrollTop);
+            scrollTop = Math.max(0, index) * options.itemHeight;
+            $items.scrollTop(scrollTop);
           }
 
-          function cancel() {
-            clearInput();
-            hideItems();
-            uiVirtualSelectController.activeItemIndex = 0;
-          }
-
-          function clearInput() {
-            elem.find('.ui-virtual-select--search-input').val('');
-            elem.find('.ui-virtual-select--search-input').trigger('blur');
-            scope.optionsProvider.filter('');
+          function clearSearchInput(omitBlur) {
+            uiVirtualSelectController.optionsProvider.filter('');
+            $searchInput.val('');
+            if (!omitBlur) {
+              $searchInput.trigger('blur');
+            }
           }
 
           function indexOfItem(itemToFind) {
-            return _.findIndex(scope.optionsProvider.items, function(item) {
-              return scope.optionsProvider.identity(item) === scope.optionsProvider.identity(itemToFind);
+            return _.findIndex(uiVirtualSelectController.optionsProvider.items, function(item) {
+              return uiVirtualSelectController.optionsProvider.identity(item) === uiVirtualSelectController.optionsProvider.identity(itemToFind);
             });
           }
 
+          function updateItemElements(items) {
+            _.each(items, function(item, index) {
+              var itemElement = $canvas.children('.ui-virtual-select--item').eq(index);
+              if (itemElement.length === 0) {
+                itemElement = $(document.createElement('div')).addClass('ui-virtual-select--item');
+                itemElement.appendTo($canvas);
+                itemElement.on('mouseenter', function(event) {
+                  // workaround to prevent scripted scrolling from triggering mousemove events
+                  if (event.pageX !== lastKnownMousePosition.x || event.pageY !== lastKnownMousePosition.y) {
+                    activeItemIndex = $(this).data('index');
+                    updateItemElements(uiVirtualSelectController.items);
+                  }
+                });
+                itemElement.on('click', function() {
+                  var itemIndex = $(this).data('index');
+                  selectItem(itemIndex);
+                });
+              }
+              itemElement.data('index', item.index);
+              itemElement.data('item', item.value);
+              itemElement.text(uiVirtualSelectController.optionsProvider.displayText(item.value));
+              if (item.index === activeItemIndex) {
+                itemElement.addClass('active');
+              } else {
+                itemElement.removeClass('active');
+              }
+            });
+            _.each(_.range(items.length, options.itemsRendered), function(index) {
+              var itemElement = $canvas.children('.ui-virtual-select--item')[index];
+              if (itemElement) {
+                itemElement.remove();
+              }
+            });
+          }
+
+          function selectItem(index) {
+            var itemModel = _.find(uiVirtualSelectController.items, {
+              index: index
+            });
+            var item = itemModel.value;
+            ngModelController.$setViewValue(item);
+            uiVirtualSelectController.selectedItem = item;
+            uiVirtualSelectController.onSelectCallback({
+              selection: item
+            });
+            clearSearchInput();
+            hideItems();
+          }
+
           function updateItemList() {
-            var firstItem = Math.max(Math.floor(scrollTop / cellHeight) - cellsPerPage, 0);
-            var lastItem = Math.min(firstItem + numberOfCells, scope.optionsProvider.size());
-            uiVirtualSelectController.items = _.map(scope.optionsProvider.get(firstItem, lastItem), function(value, index) {
+            var firstItem = Math.max(Math.floor(scrollTop / options.itemHeight) - options.itemsVisible, 0);
+            var lastItem = Math.min(firstItem + options.itemsRendered, uiVirtualSelectController.optionsProvider.size());
+            uiVirtualSelectController.items = _.map(uiVirtualSelectController.optionsProvider.get(firstItem, lastItem), function(value, index) {
               return {
-                cellId: index,
                 value: value,
                 index: firstItem + index
               };
             });
-            elem.find('.ui-virtual-select--items').css({
-              'height': (Math.min(cellsPerPage, scope.optionsProvider.size()) * cellHeight) + 'px',
+            updateItemElements(uiVirtualSelectController.items);
+            $items.css({
+              'height': (Math.min(options.itemsVisible, uiVirtualSelectController.optionsProvider.size()) * options.itemHeight) + 'px',
               'overflow-y': 'scroll'
             });
-            elem.find('.ui-virtual-select--canvas').css({
-              'height': (scope.optionsProvider.size() * cellHeight - firstItem * cellHeight) + 'px',
-              'margin-top': (firstItem * cellHeight) + 'px'
+            $canvas.css({
+              'height': (uiVirtualSelectController.optionsProvider.size() * options.itemHeight - firstItem * options.itemHeight) + 'px',
+              'margin-top': (firstItem * options.itemHeight) + 'px'
             });
           }
 
-          elem.find('.ui-virtual-select--items').on('scroll', function() {
-            scrollTop = elem.find('.ui-virtual-select--items').scrollTop();
-            updateItemList();
-            scope.$apply();
-          });
-
-          scope.$on('ui-virtual-select:focus', function() {
-            elem.find('.ui-virtual-select--search-input').focus();
-          });
-
-          function performAfterRender(callback) {
-            if ($window.requestAnimationFrame) {
-              $window.requestAnimationFrame(callback);
-            } else {
-              $timeout(callback, 100);
-            }
-          }
-
-          function adjustScrollPosition() {
-            var scrollIndex = 0;
-            if (uiVirtualSelectController.selectedItem) {
-              scrollIndex = indexOfItem(uiVirtualSelectController.selectedItem);
-            }
-            uiVirtualSelectController.activate({
-              index: scrollIndex
+          $searchInput.on('focus', function() {
+            scope.$apply(function() {
+              uiVirtualSelectController.isLoading = true;
             });
-            scrollTo(scrollIndex);
-          }
-
-          uiVirtualSelectController.select = function(item) {
-            uiVirtualSelectController.selectedItem = item.value;
-            ngModelController.$setViewValue(uiVirtualSelectController.selectedItem);
-            scope.onSelectCallback({
-              selection: item.value
-            });
-            hideItems();
-            clearInput();
-          };
-
-          uiVirtualSelectController.searchInputFocusHandler = function() {
-            uiVirtualSelectController.loading = true;
-            scope.optionsProvider.load().then(function() {
-              uiVirtualSelectController.loading = false;
+            uiVirtualSelectController.optionsProvider.load().then(function() {
+              uiVirtualSelectController.isLoading = false;
               updateItemList();
               showItems();
               scope.$evalAsync(adjustScrollPosition);
@@ -237,40 +255,53 @@ angular.module('uiVirtualSelect', [])
             $searchInput.on('keyup', searchInputKeyupHandler);
             $searchInput.on('blur', searchInputBlurHandler);
             $document.on('mousedown', documentMousedownHandler);
-          };
+          });
+
+          $items.on('scroll', function() {
+            scrollTop = $items.scrollTop();
+            updateItemList();
+          });
+
+          $canvas.on('mousemove', function(event) {
+            lastKnownMousePosition.x = event.pageX;
+            lastKnownMousePosition.y = event.pageY;
+          });
+
+          scope.$on('ui-virtual-select:focus', function() {
+            $searchInput.focus();
+          });
+
+          function adjustScrollPosition() {
+            var scrollIndex = 0;
+            if (uiVirtualSelectController.selectedItem) {
+              scrollIndex = indexOfItem(uiVirtualSelectController.selectedItem);
+            }
+            activeItemIndex = scrollIndex;
+            updateItemList();
+            scrollTo(scrollIndex);
+          }
 
           function hideItems() {
-            elem.find('.ui-virtual-select--items').css('display', 'none');
+            $items.hide();
             scope.$evalAsync(function() {
               uiVirtualSelectController.isOpen = false;
             });
-            scope.onCloseCallback();
+            uiVirtualSelectController.onCloseCallback();
           }
 
           function showItems() {
-            elem.find('.ui-virtual-select--items').css('display', 'block');
+            $items.show();
             scope.$evalAsync(function() {
               uiVirtualSelectController.isOpen = true;
             });
           }
-
-          uiVirtualSelectController.formatSearchInput = function(item) {
-            if (item) {
-              return scope.optionsProvider.displayText(item);
-            } else {
-              if (scope.optionsProvider.noSelectionText) {
-                return scope.optionsProvider.noSelectionText();
-              } else {
-                return '';
-              }
-            }
-          };
 
           ngModelController.$render = function() {
             uiVirtualSelectController.selectedItem = ngModelController.$viewValue;
           };
         };
       },
+      bindToController: true,
       scope: {
         optionsProvider: '=?uiOptionsProvider',
         onSelectCallback: '&uiOnSelect',

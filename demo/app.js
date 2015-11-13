@@ -13,6 +13,13 @@ angular.module('app', ['uiVirtualSelect'])
     this.focusInput = function() {
       $scope.$broadcast('ui-virtual-select:focus');
     };
+  // this.makeItSlow = function() {
+  //   for (var i = 0; i < 200000000; i++) {
+  //     // meh
+  //   }
+  //   console.log('meh');
+  //   return true;
+  // };
   }])
 
   .factory('uiVirtualSelectDataProvider', ['$q', '$timeout', function($q, $timeout) {

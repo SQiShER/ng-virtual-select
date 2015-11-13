@@ -21,10 +21,9 @@
 			<input type="button" ng-click="app.focusInput()" value="Focus!">
 		</p>
 
-		<ui-virtual-select ng-model="app.selection" ui-options-provider="app.uiVirtualSelectDataProvider">
-			<nvs-loading-indicator>Foo</nvs-loading-indicator>
-		</ui-virtual-select>
+		<ui-virtual-select ng-model="app.selection" ui-options-provider="app.uiVirtualSelectDataProvider"></ui-virtual-select>
 
+		<!-- <p ng-show="app.makeItSlow()">{{ app.selection }}</p> -->
 		<p>{{ app.selection }}</p>
 	</div>
 

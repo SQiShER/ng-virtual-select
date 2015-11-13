@@ -1,11 +1,9 @@
-<div class="ui-virtual-select" ng-class="{open: select.isOpen, loading: select.loading}">
-	<input type="text" class="ui-virtual-select--search-input" ng-focus="select.searchInputFocusHandler($event)" placeholder="{{ select.formatSearchInput(select.selectedItem) }}" />
-	<div class="ui-virtual-select--loading-indicator" ng-show="select.loading">
+<div class="ui-virtual-select" ng-class="{open: select.isOpen, loading: select.isLoading}">
+	<input type="text" class="ui-virtual-select--search-input" placeholder="{{ select.formatSearchInput(select.selectedItem) }}" />
+	<div class="ui-virtual-select--loading-indicator" ng-show="select.isLoading">
 		Loading...
 	</div>
 	<div class="ui-virtual-select--items">
-		<div class="ui-virtual-select--canvas">
-			<div class="ui-virtual-select--item" ng-repeat="item in select.items track by item.cellId" ng-class="{active: select.isActive(item)}" ng-mousemove="select.activate(item, $event)" ng-click="select.select(item)">{{ optionsProvider.displayText(item.value) }}</div>
-		</div>
+		<div class="ui-virtual-select--canvas"></div>
 	</div>
 </div>
