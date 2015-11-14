@@ -59,7 +59,7 @@ angular.module('uiVirtualSelect', [])
       var $select = elem.find('.ui-virtual-select');
       var $searchInput = elem.find('.ui-virtual-select--search-input');
       var $items = elem.find('.ui-virtual-select--items').hide();
-      var $scrollContainer = elem.find('.ui-virtual-select--scroll-container');
+      // var $scrollContainer = elem.find('.ui-virtual-select--scroll-container');
       var $canvas = elem.find('.ui-virtual-select--canvas');
       var $loadingIndicator = elem.find('.ui-virtual-select--loading-indicator').hide();
 
@@ -257,15 +257,11 @@ angular.module('uiVirtualSelect', [])
           'height': (Math.min(options.itemsVisible, totalItemCount) * itemHeight) + 'px',
           'overflow-y': 'scroll'
         });
-        $scrollContainer.css({
-          'height': (totalItemCount * itemHeight) + 'px',
-          'position': 'relative'
-        });
+        var distanceFromTop = firstItem * itemHeight;
+        var heightOfAllItems = totalItemCount * itemHeight;
         $canvas.css({
-          'position': 'absolute',
-          'left': 0,
-          'right': 0,
-          'top': (firstItem * itemHeight) + 'px'
+          'height': (heightOfAllItems - distanceFromTop) + 'px',
+          'margin-top': distanceFromTop + 'px'
         });
       }
 
