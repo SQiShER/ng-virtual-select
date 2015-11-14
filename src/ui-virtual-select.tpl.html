@@ -1,9 +1,11 @@
-<div class="ui-virtual-select" ng-class="{open: select.isOpen, loading: select.isLoading}">
-	<input type="text" class="ui-virtual-select--search-input" placeholder="{{ select.formatSearchInput(select.selectedItem) }}" />
-	<div class="ui-virtual-select--loading-indicator" ng-show="select.isLoading">
-		Loading...
-	</div>
-	<div class="ui-virtual-select--items">
-		<div class="ui-virtual-select--canvas"></div>
-	</div>
+<div class="ui-virtual-select" ng-class="{open: select.isOpen}">
+  <input type="text" class="ui-virtual-select--search-input" placeholder="{{ select.formatSearchInput(select.selectedItem) }}" />
+  <div class="ui-virtual-select--loading-indicator">
+    Loading...
+  </div>
+  <div class="ui-virtual-select--items">
+    <div class="ui-virtual-select--scroll-container">
+      <div class="ui-virtual-select--canvas"></div>
+    </div>
+  </div>
 </div>
