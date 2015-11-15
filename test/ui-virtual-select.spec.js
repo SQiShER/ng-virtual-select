@@ -130,23 +130,13 @@ describe('directive', () => {
   });
 
   describe(`when search input gains focus`, () => {
-    let deferred;
     beforeEach(function() {
       createDirective();
     });
-    beforeEach(inject($q => {
-      Context.$rootScope.$apply(function() {
-        Context.$scope.data.optionsProvider = {
-          load: sinon.stub(),
-          get: sinon.stub(),
-          size: sinon.stub(),
-          displayText: function(item) {
-            return item && item.name;
-          }
-        };
-      });
-      deferred = $q.defer()
-      Context.$scope.data.optionsProvider.load.returns(deferred.promise);
+    beforeEach(inject(($q) => {
+      Context.$scope.data.optionsProvider = new MockOptionsProvider($q);
+      sinon.spy(Context.$scope.data.optionsProvider, 'load');
+      Context.$rootScope.$digest();
       Context.$element.find('.ui-virtual-select--search-input').focus();
     }));
     it(`"load" function of options provider should be called`, () => {
@@ -154,12 +144,12 @@ describe('directive', () => {
     });
     it(`loading indicator should only be visible while "load" promise is pending`, () => {
       expect(Context.$element.find('.ui-virtual-select--loading-indicator')).to.be.visible;
-      deferred.resolve();
+      Context.$scope.data.optionsProvider.resolveLoad(10);
       Context.$rootScope.$digest();
       expect(Context.$element.find('.ui-virtual-select--loading-indicator')).not.to.be.visible;
     });
     it(`items should be visible once options have been loaded`, () => {
-      deferred.resolve();
+      Context.$scope.data.optionsProvider.resolveLoad(10);
       Context.$rootScope.$digest();
       expect(Context.$element.find('.ui-virtual-select--items')).to.be.visible;
     });

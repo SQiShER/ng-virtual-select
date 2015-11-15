@@ -1,137 +1,130 @@
 'use strict';
 
-angular.module('uiVirtualSelect', [])
+var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
-  .directive('uiVirtualSelect', ['$timeout', '$document', function($timeout, $document) {
+var _slicedToArray = (function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; })();
 
-    function controllerFn() {
-      var self = this;
-      self.items = [];
-      self.search = '';
-      self.isOpen = false;
-      self.isLoading = false;
-      self.formatSearchInput = function(item) {
-        if (item) {
-          return self.optionsProvider.displayText(item);
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+angular.module('uiVirtualSelect', []).directive('uiVirtualSelect', ['$timeout', '$document', function ($timeout, $document) {
+
+  var Keys = {
+    ArrowUp: 38,
+    ArrowDown: 40,
+    Enter: 13,
+    Escape: 27
+  };
+
+  function controllerFn() {
+    var _this = this;
+
+    this.formatSearchInput = function (item) {
+      if (item) {
+        return _this.optionsProvider.displayText(item);
+      } else {
+        if (_this.optionsProvider.noSelectionText) {
+          return _this.optionsProvider.noSelectionText();
         } else {
-          if (self.optionsProvider.noSelectionText) {
-            return self.optionsProvider.noSelectionText();
-          } else {
-            return '';
-          }
+          return '';
         }
-      };
-    }
+      }
+    };
+  }
 
-    function linkFn(scope, elem, attrs, controllers, $transclude) {
-      var uiVirtualSelectController = controllers[0];
-      var ngModelController = controllers[1];
+  function linkFn(scope, elem, attrs, _ref, $transclude) {
+    var _ref2 = _slicedToArray(_ref, 2);
 
-      function detectItemHeight() {
-        var $sampleItem = $('<div class="ui-virtual-select--item">Text</div>').hide().appendTo("body");
-        var height = $sampleItem.outerHeight();
-        $sampleItem.remove();
-        return height;
+    var uiVirtualSelectController = _ref2[0];
+    var ngModelController = _ref2[1];
+
+    var $select = elem.find('.ui-virtual-select');
+    var $searchInput = elem.find('.ui-virtual-select--search-input');
+    var $canvas = elem.find('.ui-virtual-select--canvas');
+    var $loadingIndicator = elem.find('.ui-virtual-select--loading-indicator').hide();
+    var $items = elem.find('.ui-virtual-select--items').css('overflow-y', 'scroll').hide();
+    var options = {
+      itemHeight: detectItemHeight(),
+      itemsVisible: 10,
+      itemsRendered: 30
+    };
+    var lastKnownMousePosition = {
+      x: 0,
+      y: 0
+    };
+    var scrollTop = 0;
+    var previousSearch = '';
+    var clickedOutsideElement = true;
+    var activeItemIndex = 0;
+    var _itemModels = [];
+
+    var ItemModel = function ItemModel(value, index) {
+      _classCallCheck(this, ItemModel);
+
+      this.index = index;
+      this.value = value;
+    };
+
+    var LoadingIndicator = (function () {
+      function LoadingIndicator($loadingIndicator, $select, $template) {
+        _classCallCheck(this, LoadingIndicator);
+
+        this.$loadingIndicator = $loadingIndicator;
+        this.$select = $select;
+        this.loadingClassName = 'loading';
+        if ($template.length) {
+          $loadingIndicator.empty().append($template);
+        }
       }
 
-      var Keys = {
-        ArrowUp: 38,
-        ArrowDown: 40,
-        Enter: 13,
-        Escape: 27
-      };
+      _createClass(LoadingIndicator, [{
+        key: 'enable',
+        value: function enable() {
+          this.$loadingIndicator.show();
+          this.$select.addClass(this.loadingClassName);
+        }
+      }, {
+        key: 'disable',
+        value: function disable() {
+          this.$loadingIndicator.hide();
+          this.$select.removeClass(this.loadingClassName);
+        }
+      }]);
 
-      var options = {
-        itemHeight: detectItemHeight(),
-        itemsVisible: 10,
-        itemsRendered: 30
-      };
+      return LoadingIndicator;
+    })();
 
-      var lastKnownMousePosition = {
-        x: 0,
-        y: 0
-      };
-      var scrollTop = 0;
-      var previousSearch = '';
-      var clickedOutsideElement = true;
-      var activeItemIndex = 0;
+    var loadingIndicator = new LoadingIndicator($loadingIndicator, $select, $transclude().siblings('nvs-loading-indicator').eq(0));
 
-      var $select = elem.find('.ui-virtual-select');
-      var $searchInput = elem.find('.ui-virtual-select--search-input');
-      var $items = elem.find('.ui-virtual-select--items').hide();
-      // var $scrollContainer = elem.find('.ui-virtual-select--scroll-container');
-      var $canvas = elem.find('.ui-virtual-select--canvas');
-      var $loadingIndicator = elem.find('.ui-virtual-select--loading-indicator').hide();
+    $searchInput.on('focus', function () {
+      loadingIndicator.enable();
+      uiVirtualSelectController.optionsProvider.load().then(function () {
+        loadingIndicator.disable();
+        updateView();
+        open();
+        scope.$evalAsync(adjustScrollPosition);
+      });
 
-      var loadingIndicatorTemplate = $transclude().siblings('nvs-loading-indicator')[0];
-      if (loadingIndicatorTemplate) {
-        $loadingIndicator.empty();
-        $loadingIndicator.append(loadingIndicatorTemplate);
-      }
-
-      $searchInput.on('focus', searchInputFocusHandler);
-
-      function searchInputFocusHandler() {
-        $loadingIndicator.show();
-        $select.addClass('loading');
-        uiVirtualSelectController.optionsProvider.load().then(function() {
-          $loadingIndicator.hide();
-          $select.removeClass('loading');
-          updateItemList();
-          showItems();
-          scope.$evalAsync(adjustScrollPosition);
-        });
-        $searchInput.on('blur', searchInputBlurHandler);
-        $searchInput.on('keyup', searchInputKeyupHandler);
-        $searchInput.on('keydown', searchInputKeydownHandler);
-        $document.on('mousedown', documentMousedownHandler);
-      }
-
-      function searchInputBlurHandler() {
+      $searchInput.on('blur', function () {
         if (clickedOutsideElement) {
           clearSearchInput(true);
-          hideItems();
+          close();
         }
-        $searchInput.off('keydown', searchInputKeydownHandler);
-        $searchInput.off('keyup', searchInputKeyupHandler);
-        $searchInput.off('blur', searchInputBlurHandler);
-        $document.off('mousedown', documentMousedownHandler);
-      }
+        $searchInput.off('keydown keyup blur');
+        $document.off('mousedown');
+      });
 
-      function activatePreviousItem() {
-        var firstVisibleItem = Math.ceil((scrollTop + options.itemHeight) / options.itemHeight) - 1;
-        if (activeItemIndex > 0) {
-          activeItemIndex--;
-          updateItemList();
-          if (activeItemIndex < firstVisibleItem) {
-            scrollTo(Math.ceil(scrollTop / options.itemHeight) - 1);
-          }
+      $searchInput.on('keyup', function (event) {
+        var search = $(event.target).val();
+        if (search !== previousSearch) {
+          uiVirtualSelectController.optionsProvider.filter(search);
+          previousSearch = search;
+          activeItemIndex = 0;
+          updateView();
+          scrollTo(0);
         }
-      }
+      });
 
-      function activateNextItem() {
-        var lastVisibleItem = Math.floor((scrollTop + options.itemHeight) / options.itemHeight) + options.itemsVisible -
-          1;
-        if (activeItemIndex < uiVirtualSelectController.optionsProvider.size() - 1) {
-          activeItemIndex++;
-          updateItemList();
-          if (activeItemIndex >= lastVisibleItem) {
-            scrollTo(Math.floor(scrollTop / options.itemHeight) + 1);
-          }
-        }
-      }
-
-      function selectActiveItem() {
-        selectItem(activeItemIndex);
-      }
-
-      function cancel() {
-        clearSearchInput();
-        hideItems();
-        activeItemIndex = 0;
-      }
-
-      function searchInputKeydownHandler(event) {
+      $searchInput.on('keydown', function (event) {
         switch (event.which) {
           case Keys.ArrowUp:
             return activatePreviousItem();
@@ -144,187 +137,241 @@ angular.module('uiVirtualSelect', [])
           default:
             clickedOutsideElement = true;
         }
-      }
+      });
 
-      function searchInputKeyupHandler(event) {
-        var search = $(event.target).val();
-        if (search !== previousSearch) {
-          uiVirtualSelectController.optionsProvider.filter(search);
-          previousSearch = search;
-          activeItemIndex = 0;
-          updateItemList();
-          scrollTo(0);
+      $document.on('mousedown', function (event) {
+        clickedOutsideElement = !$.contains(elem[0], event.target);
+      });
+    });
+
+    $items.on('scroll', _.throttle(function () {
+      scrollTop = $items.scrollTop();
+      updateView();
+    }, 10));
+
+    $canvas.on('mousemove', _.throttle(function (event) {
+      lastKnownMousePosition.x = event.pageX;
+      lastKnownMousePosition.y = event.pageY;
+    }, 50));
+
+    function detectItemHeight() {
+      var $sampleItem = $('<div class="ui-virtual-select--item">Text</div>').hide().appendTo("body");
+      var height = $sampleItem.outerHeight();
+      $sampleItem.remove();
+      return height;
+    }
+
+    function activatePreviousItem() {
+      var itemHeight = options.itemHeight;
+
+      var firstVisibleItem = Math.ceil((scrollTop + itemHeight) / itemHeight) - 1;
+      if (activeItemIndex > 0) {
+        activeItemIndex--;
+        updateView();
+        if (activeItemIndex < firstVisibleItem) {
+          scrollTo(Math.ceil(scrollTop / itemHeight) - 1);
         }
       }
+    }
 
-      function documentMousedownHandler(event) {
-        var targetBelongsToThisComponent = $.contains(elem[0], event.target);
-        if (targetBelongsToThisComponent) {
-          clickedOutsideElement = false;
-        } else {
-          clickedOutsideElement = true;
+    function activateNextItem() {
+      var itemHeight = options.itemHeight;
+      var itemsVisible = options.itemsVisible;
+
+      var lastVisibleItem = Math.floor((scrollTop + itemHeight) / itemHeight) + itemsVisible - 1;
+      if (activeItemIndex < uiVirtualSelectController.optionsProvider.size() - 1) {
+        activeItemIndex++;
+        updateView();
+        if (activeItemIndex >= lastVisibleItem) {
+          scrollTo(Math.floor(scrollTop / itemHeight) + 1);
         }
       }
+    }
 
-      function scrollTo(index) {
-        scrollTop = Math.max(0, index) * options.itemHeight;
-        $items.scrollTop(scrollTop);
+    function selectActiveItem() {
+      selectItem(activeItemIndex);
+    }
+
+    function cancel() {
+      clearSearchInput();
+      close();
+      activeItemIndex = 0;
+    }
+
+    function scrollTo(index) {
+      var itemHeight = options.itemHeight;
+
+      scrollTop = Math.max(0, index) * itemHeight;
+      $items.scrollTop(scrollTop);
+    }
+
+    function clearSearchInput(omitBlur) {
+      uiVirtualSelectController.optionsProvider.filter('');
+      $searchInput.val('');
+      if (!omitBlur) {
+        $searchInput.trigger('blur');
       }
+    }
 
-      function clearSearchInput(omitBlur) {
-        uiVirtualSelectController.optionsProvider.filter('');
-        $searchInput.val('');
-        if (!omitBlur) {
-          $searchInput.trigger('blur');
+    function indexOfItem(itemToFind) {
+      var _uiVirtualSelectContr = uiVirtualSelectController.optionsProvider;
+      var items = _uiVirtualSelectContr.items;
+      var identity = _uiVirtualSelectContr.identity;
+
+      return _.findIndex(items, function (item) {
+        return identity(item) === identity(itemToFind);
+      });
+    }
+
+    function updateItemElements() {
+      var $itemSet = $canvas.children('.ui-virtual-select--item');
+      var $activeItem = $itemSet.filter('.active');
+      _itemModels.forEach(function (itemModel, index) {
+        var $itemElement = $canvas.children('.ui-virtual-select--item').eq(index);
+        if ($itemElement.length === 0) {
+          $itemElement = $(document.createElement('div')).addClass('ui-virtual-select--item').appendTo($canvas).on('mousemove', function (event) {
+            var previousX = lastKnownMousePosition.x;
+            var previousY = lastKnownMousePosition.y;
+            var currentX = event.pageX;
+            var currentY = event.pageY;
+            // workaround to prevent scripted scrolling from triggering mousemove events
+
+            if (currentX !== previousX || currentY !== previousY) {
+              activeItemIndex = $(event.currentTarget).data('index');
+              updateItemElements();
+            }
+          }).on('click', function (event) {
+            selectItem($(event.currentTarget).data('index'));
+          });
         }
-      }
-
-      function indexOfItem(itemToFind) {
-        var identity = uiVirtualSelectController.optionsProvider.identity(itemToFind);
-        return _.findIndex(uiVirtualSelectController.optionsProvider.items, function(item) {
-          return uiVirtualSelectController.optionsProvider.identity(item) === identity;
-        });
-      }
-
-      function itemMouseMoveHandler(event) {
-        // workaround to prevent scripted scrolling from triggering mousemove events
-        if (event.pageX !== lastKnownMousePosition.x || event.pageY !== lastKnownMousePosition.y) {
-          activeItemIndex = $(this).data('index');
-          updateItemElements(uiVirtualSelectController.items);
-        }
-      }
-
-      function updateItemElements(items) {
-        var $itemSet = $canvas.children('.ui-virtual-select--item');
-        var $currentlyActiveItem = $itemSet.filter('.active');
-        _.each(items, function(item, index) {
-          var itemElement = $canvas.children('.ui-virtual-select--item').eq(index);
-          if (itemElement.length === 0) {
-            itemElement = $(document.createElement('div')).addClass('ui-virtual-select--item');
-            itemElement.appendTo($canvas);
-            itemElement.on('mousemove', itemMouseMoveHandler);
-            itemElement.on('click', function() {
-              var itemIndex = $(this).data('index');
-              selectItem(itemIndex);
-            });
-          }
-          var itemIdentity = uiVirtualSelectController.optionsProvider.identity(item.value);
-          if (itemIdentity !== itemElement.data('identity')) {
-            itemElement.data('identity', itemIdentity);
-            itemElement.data('index', item.index);
-            itemElement.data('item', item.value);
-            itemElement.text(uiVirtualSelectController.optionsProvider.displayText(item.value));
-          }
-          if (item.index === activeItemIndex && !itemElement.hasClass('active')) {
-            $currentlyActiveItem.removeClass('active');
-            itemElement.addClass('active');
-          }
-        });
-
-        // remove unused elements
-        $canvas.children('.ui-virtual-select--item').slice(items.length).remove();
-      }
-
-      function selectItem(index) {
-        var itemModel = _.find(uiVirtualSelectController.items, {
-          index: index
-        });
+        var _uiVirtualSelectContr2 = uiVirtualSelectController.optionsProvider;
+        var identityFn = _uiVirtualSelectContr2.identity;
+        var displayTextFn = _uiVirtualSelectContr2.displayText;
         var item = itemModel.value;
+        var itemIndex = itemModel.index;
+
+        var itemIdentity = identityFn(item);
+        if (itemIdentity !== $itemElement.data('identity')) {
+          $itemElement.data('identity', itemIdentity).data('index', itemIndex).data('item', item).text(displayTextFn(item));
+        }
+        if (itemIndex === activeItemIndex && !$itemElement.hasClass('active')) {
+          $activeItem.removeClass('active');
+          $itemElement.addClass('active');
+        }
+      });
+
+      // remove unused elements
+      $canvas.children('.ui-virtual-select--item').slice(_itemModels.length).remove();
+    }
+
+    function selectItem(index) {
+      var itemModel = _itemModels.find(function (itemModel) {
+        return itemModel.index === index;
+      });
+      var item = itemModel.value;
+      scope.$apply(function () {
         ngModelController.$setViewValue(item);
         uiVirtualSelectController.selectedItem = item;
         uiVirtualSelectController.onSelectCallback({
           selection: item
         });
-        clearSearchInput();
-        hideItems();
-      }
-
-      function updateItemList() {
-        var itemHeight = options.itemHeight,
-          optionsProvider = uiVirtualSelectController.optionsProvider,
-          firstItem = Math.max(Math.floor(scrollTop / itemHeight) - options.itemsVisible, 0),
-          lastItem = firstItem + options.itemsRendered,
-          itemsToRender = optionsProvider.get(firstItem, lastItem),
-          totalItemCount = optionsProvider.size();
-        uiVirtualSelectController.items = _.map(itemsToRender, function(value, index) {
-          return {
-            index: firstItem + index,
-            value: value
-          };
-        });
-        updateItemElements(uiVirtualSelectController.items);
-        $items.css({
-          'height': (Math.min(options.itemsVisible, totalItemCount) * itemHeight) + 'px',
-          'overflow-y': 'scroll'
-        });
-        var distanceFromTop = firstItem * itemHeight;
-        var heightOfAllItems = totalItemCount * itemHeight;
-        $canvas.css({
-          'height': (heightOfAllItems - distanceFromTop) + 'px',
-          'margin-top': distanceFromTop + 'px'
-        });
-      }
-
-      $items.on('scroll', _.throttle(function itemsScrollHandler() {
-        scrollTop = $items.scrollTop();
-        updateItemList();
-      }, 10));
-
-      $canvas.on('mousemove', _.throttle(function canvasMouseMoveHandler(event) {
-        lastKnownMousePosition.x = event.pageX;
-        lastKnownMousePosition.y = event.pageY;
-      }, 50));
-
-      scope.$on('ui-virtual-select:focus', function() {
-        $searchInput.focus();
       });
-
-      function adjustScrollPosition() {
-        var scrollIndex = 0;
-        if (uiVirtualSelectController.selectedItem) {
-          scrollIndex = indexOfItem(uiVirtualSelectController.selectedItem);
-        }
-        activeItemIndex = scrollIndex;
-        updateItemList();
-        scrollTo(scrollIndex);
-      }
-
-      function hideItems() {
-        $items.hide();
-        scope.$evalAsync(function() {
-          uiVirtualSelectController.isOpen = false;
-        });
-        uiVirtualSelectController.onCloseCallback();
-      }
-
-      function showItems() {
-        $items.show();
-        scope.$evalAsync(function() {
-          uiVirtualSelectController.isOpen = true;
-        });
-      }
-
-      ngModelController.$render = function() {
-        uiVirtualSelectController.selectedItem = ngModelController.$viewValue;
-      };
+      clearSearchInput();
+      close();
     }
 
-    return {
-      restrict: 'E',
-      require: ['uiVirtualSelect', 'ngModel'],
-      templateUrl: 'ui-virtual-select.tpl.html',
-      controller: controllerFn,
-      controllerAs: 'select',
-      transclude: true,
-      link: linkFn,
-      bindToController: true,
-      scope: {
-        optionsProvider: '=?uiOptionsProvider',
-        onSelectCallback: '&uiOnSelect',
-        onCloseCallback: '&uiOnClose'
-      }
-    };
-  }]);
+    function updateView() {
+      updateItemModels();
+      updateItemElements();
+      updateItemsElementSize();
+      updateCanvasElementSize();
+    }
 
-angular.module("uiVirtualSelect").run(["$templateCache", function($templateCache) {$templateCache.put("ui-virtual-select.tpl.html","<div class=\"ui-virtual-select\" ng-class=\"{open: select.isOpen}\">\n  <input type=\"text\" class=\"ui-virtual-select--search-input\" placeholder=\"{{ select.formatSearchInput(select.selectedItem) }}\" />\n  <div class=\"ui-virtual-select--loading-indicator\">\n    Loading...\n  </div>\n  <div class=\"ui-virtual-select--items\">\n    <div class=\"ui-virtual-select--canvas\"></div>\n  </div>\n</div>");}]);
+    function updateItemModels() {
+      var itemHeight = options.itemHeight;
+      var itemsVisible = options.itemsVisible;
+      var itemsRendered = options.itemsRendered;
+
+      var firstItem = Math.max(Math.floor(scrollTop / itemHeight) - itemsVisible, 0);
+      var items = uiVirtualSelectController.optionsProvider.get(firstItem, firstItem + itemsRendered);
+      _itemModels = items.map(function (value, index) {
+        return new ItemModel(value, firstItem + index);
+      });
+    }
+
+    function updateItemsElementSize() {
+      var itemHeight = options.itemHeight;
+      var itemsVisible = options.itemsVisible;
+
+      var totalItemCount = uiVirtualSelectController.optionsProvider.size();
+      var itemsElementHeight = Math.min(itemsVisible, totalItemCount) * itemHeight;
+      $items.css({
+        'height': itemsElementHeight + 'px'
+      });
+    }
+
+    function updateCanvasElementSize() {
+      var itemHeight = options.itemHeight;
+      var itemsVisible = options.itemsVisible;
+
+      var firstItem = Math.max(Math.floor(scrollTop / itemHeight) - itemsVisible, 0);
+      var totalItemCount = uiVirtualSelectController.optionsProvider.size();
+      var canvasElementMarginTop = firstItem * itemHeight;
+      var canvasElementHeight = totalItemCount * itemHeight - firstItem * itemHeight;
+      $canvas.css({
+        'height': canvasElementHeight + 'px',
+        'margin-top': canvasElementMarginTop + 'px'
+      });
+    }
+
+    scope.$on('ui-virtual-select:focus', function () {
+      $searchInput.focus();
+    });
+
+    function adjustScrollPosition() {
+      var scrollIndex = 0;
+      if (uiVirtualSelectController.selectedItem) {
+        scrollIndex = indexOfItem(uiVirtualSelectController.selectedItem);
+      }
+      activeItemIndex = scrollIndex;
+      updateView();
+      scrollTo(scrollIndex);
+    }
+
+    function close() {
+      $items.hide();
+      $select.removeClass('open');
+      uiVirtualSelectController.onCloseCallback();
+    }
+
+    function open() {
+      $items.show();
+      $select.addClass('open');
+    }
+
+    ngModelController.$render = function () {
+      uiVirtualSelectController.selectedItem = ngModelController.$viewValue;
+    };
+  }
+
+  return {
+    restrict: 'E',
+    require: ['uiVirtualSelect', 'ngModel'],
+    templateUrl: 'ui-virtual-select.tpl.html',
+    controller: controllerFn,
+    controllerAs: 'select',
+    transclude: true,
+    link: linkFn,
+    bindToController: true,
+    scope: {
+      optionsProvider: '=?uiOptionsProvider',
+      onSelectCallback: '&uiOnSelect',
+      onCloseCallback: '&uiOnClose'
+    }
+  };
+}]);
+
+angular.module("uiVirtualSelect").run(["$templateCache", function ($templateCache) {
+  $templateCache.put("ui-virtual-select.tpl.html", "<div class=\"ui-virtual-select\">\n	<input type=\"text\" class=\"ui-virtual-select--search-input\" placeholder=\"{{ select.formatSearchInput(select.selectedItem) }}\" />\n	<div class=\"ui-virtual-select--loading-indicator\">\n		Loading...\n	</div>\n	<div class=\"ui-virtual-select--items\">\n		<div class=\"ui-virtual-select--canvas\"></div>\n	</div>\n</div>");
+}]);
 //# sourceMappingURL=ui-virtual-select.js.map

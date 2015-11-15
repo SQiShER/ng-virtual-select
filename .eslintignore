@@ -1,4 +1,4 @@
-.gulpfile
+gulpfile.js
 karma.conf.js
 protractor.conf.js
 package.json

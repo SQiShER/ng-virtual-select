@@ -3,6 +3,7 @@ const gulp = require('gulp'),
   autoprefixer = require('gulp-autoprefixer'),
   concat = require('gulp-concat'),
   templateCache = require('gulp-angular-templatecache'),
+  babel = require('gulp-babel'),
   del = require('del'),
   path = require('path'),
   KarmaServer = require('karma').Server;
@@ -35,6 +36,9 @@ gulp.task('javascript', ['templates'], () => {
   return gulp.src(['src/*.js', options.tempDir + '/ui-virtual-select.tpl.js'])
     .pipe(sourcemaps.init())
     .pipe(concat('ui-virtual-select.js'))
+    .pipe(babel({
+      presets: ['es2015']
+    }))
     .pipe(sourcemaps.write('.'))
     .pipe(gulp.dest(options.buildDir));
 });
