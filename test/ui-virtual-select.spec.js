@@ -77,13 +77,15 @@ describe('directive', () => {
     }
     </style>`);
     $(document.head).append(styleElement);
-    let $element = angular.element('<ui-virtual-select ng-model="data.selection" ui-options-provider="data.optionsProvider"></ui-virtual-select>');
+    let $element = angular.element('<ui-virtual-select ng-model="data.selection" ui-options-provider="data.optionsProvider" ui-on-loaded="data.loadCallback()"></ui-virtual-select>');
     $(document.body).append($element);
     let $scope = Context.$rootScope.$new();
     $scope.data = {
       selection: selection,
-      optionsProvider: optionsProvider
+      optionsProvider: optionsProvider,
+      loadCallback: function() {}
     }
+    sinon.stub($scope.data, 'loadCallback');
     Context.$compile($element)($scope);
     Context.$element = $element;
     Context.$style = styleElement;
@@ -236,6 +238,38 @@ describe('directive', () => {
         Context.$scope.$digest();
         expect(Context.$element.find('.ui-virtual-select--search-input')).to.have.attr('placeholder', '');
       });
+    });
+  });
+
+  describe('loading indicator', () => {
+    let optionsProvider;
+    beforeEach(inject(($q) => {
+      optionsProvider = new MockOptionsProvider($q);
+      createDirective({
+        optionsProvider: optionsProvider
+      });
+      Context.$scope.$digest();
+    }));
+    it(`triggered via event`, () => {
+      sinon.spy(optionsProvider, 'load');
+      Context.$scope.$broadcast('ui-virtual-select:load');
+      expect(optionsProvider.load).to.have.been.calledOnce;
+      optionsProvider.resolveLoad(10);
+      Context.$scope.$digest();
+      Context.$element.find('.ui-virtual-select--search-input').focus();
+      expect(optionsProvider.load).to.have.been.calledOnce;
+      Context.$scope.$digest();
+      expect(Context.$scope.data.loadCallback).to.have.been.calledOnce;
+    });
+    it(`triggered via focus`, () => {
+      sinon.spy(optionsProvider, 'load');
+      Context.$element.find('.ui-virtual-select--search-input').focus();
+      expect(optionsProvider.load).to.have.been.calledOnce;
+      Context.$scope.$digest();
+      expect(Context.$scope.data.loadCallback).not.to.have.been.called;
+      optionsProvider.resolveLoad(10);
+      Context.$scope.$digest();
+      expect(Context.$scope.data.loadCallback).to.have.been.calledOnce;
     });
   });
 });

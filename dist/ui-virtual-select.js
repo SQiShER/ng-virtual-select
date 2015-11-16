@@ -6,7 +6,7 @@ var _slicedToArray = (function () { function sliceIterator(arr, i) { var _arr = 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-angular.module('uiVirtualSelect', []).directive('uiVirtualSelect', ['$timeout', '$document', function ($timeout, $document) {
+angular.module('uiVirtualSelect', []).directive('uiVirtualSelect', ['$timeout', '$document', '$q', function ($timeout, $document, $q) {
 
   var Keys = {
     ArrowUp: 38,
@@ -95,10 +95,23 @@ angular.module('uiVirtualSelect', []).directive('uiVirtualSelect', ['$timeout', 
 
     var loadingIndicator = new LoadingIndicator($loadingIndicator, $select, $transclude().siblings('nvs-loading-indicator').eq(0));
 
+    var loaded = false;
+
+    function doLoad() {
+      if (loaded) {
+        return $q.when();
+      } else {
+        loadingIndicator.enable();
+        return uiVirtualSelectController.optionsProvider.load().then(function () {
+          loaded = true;
+          loadingIndicator.disable();
+          uiVirtualSelectController.onLoadedCallback({});
+        });
+      }
+    }
+
     $searchInput.on('focus', function () {
-      loadingIndicator.enable();
-      uiVirtualSelectController.optionsProvider.load().then(function () {
-        loadingIndicator.disable();
+      doLoad().then(function () {
         updateView();
         open();
         scope.$evalAsync(adjustScrollPosition);
@@ -265,7 +278,7 @@ angular.module('uiVirtualSelect', []).directive('uiVirtualSelect', ['$timeout', 
     }
 
     function selectItem(index) {
-      var itemModel = _itemModels.find(function (itemModel) {
+      var itemModel = _.find(_itemModels, function (itemModel) {
         return itemModel.index === index;
       });
       var item = itemModel.value;
@@ -328,6 +341,10 @@ angular.module('uiVirtualSelect', []).directive('uiVirtualSelect', ['$timeout', 
       $searchInput.focus();
     });
 
+    scope.$on('ui-virtual-select:load', function () {
+      doLoad();
+    });
+
     function adjustScrollPosition() {
       var scrollIndex = 0;
       if (uiVirtualSelectController.selectedItem) {
@@ -366,7 +383,8 @@ angular.module('uiVirtualSelect', []).directive('uiVirtualSelect', ['$timeout', 
     scope: {
       optionsProvider: '=?uiOptionsProvider',
       onSelectCallback: '&uiOnSelect',
-      onCloseCallback: '&uiOnClose'
+      onCloseCallback: '&uiOnClose',
+      onLoadedCallback: '&uiOnLoaded'
     }
   };
 }]);

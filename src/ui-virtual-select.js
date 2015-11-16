@@ -2,7 +2,7 @@
 
 angular.module('uiVirtualSelect', [])
 
-  .directive('uiVirtualSelect', ['$timeout', '$document', function($timeout, $document) {
+  .directive('uiVirtualSelect', ['$timeout', '$document', '$q', function($timeout, $document, $q) {
 
     const Keys = {
       ArrowUp: 38,
@@ -83,10 +83,23 @@ angular.module('uiVirtualSelect', [])
         $transclude().siblings('nvs-loading-indicator').eq(0)
       );
 
+      let loaded = false;
+
+      function doLoad() {
+        if (loaded) {
+          return $q.when();
+        } else {
+          loadingIndicator.enable();
+          return uiVirtualSelectController.optionsProvider.load().then(() => {
+            loaded = true;
+            loadingIndicator.disable();
+            uiVirtualSelectController.onLoadedCallback({});
+          });
+        }
+      }
+
       $searchInput.on('focus', () => {
-        loadingIndicator.enable();
-        uiVirtualSelectController.optionsProvider.load().then(() => {
-          loadingIndicator.disable();
+        doLoad().then(() => {
           updateView();
           open();
           scope.$evalAsync(adjustScrollPosition);
@@ -248,7 +261,7 @@ angular.module('uiVirtualSelect', [])
       }
 
       function selectItem(index) {
-        const itemModel = _itemModels.find(itemModel => itemModel.index === index);
+        const itemModel = _.find(_itemModels, itemModel => itemModel.index === index);
         const item = itemModel.value;
         scope.$apply(() => {
           ngModelController.$setViewValue(item);
@@ -300,6 +313,10 @@ angular.module('uiVirtualSelect', [])
         $searchInput.focus();
       });
 
+      scope.$on('ui-virtual-select:load', () => {
+        doLoad();
+      });
+
       function adjustScrollPosition() {
         let scrollIndex = 0;
         if (uiVirtualSelectController.selectedItem) {
@@ -338,7 +355,8 @@ angular.module('uiVirtualSelect', [])
       scope: {
         optionsProvider: '=?uiOptionsProvider',
         onSelectCallback: '&uiOnSelect',
-        onCloseCallback: '&uiOnClose'
+        onCloseCallback: '&uiOnClose',
+        onLoadedCallback: '&uiOnLoaded'
       }
     };
   }]);

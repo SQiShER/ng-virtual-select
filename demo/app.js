@@ -13,6 +13,9 @@ angular.module('app', ['uiVirtualSelect'])
     this.focusInput = function() {
       $scope.$broadcast('ui-virtual-select:focus');
     };
+    this.loadInput = function() {
+      $scope.$broadcast('ui-virtual-select:load');
+    };
   // this.makeItSlow = function() {
   //   for (var i = 0; i < 200000000; i++) {
   //     // meh
