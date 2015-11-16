@@ -105,7 +105,7 @@ angular.module('uiVirtualSelect', []).directive('uiVirtualSelect', ['$timeout', 
         return uiVirtualSelectController.optionsProvider.load().then(function () {
           loaded = true;
           loadingIndicator.disable();
-          uiVirtualSelectController.onLoadedCallback({});
+          uiVirtualSelectController.onLoadedCallback();
         });
       }
     }

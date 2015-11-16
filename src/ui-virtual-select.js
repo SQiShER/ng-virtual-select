@@ -93,7 +93,7 @@ angular.module('uiVirtualSelect', [])
           return uiVirtualSelectController.optionsProvider.load().then(() => {
             loaded = true;
             loadingIndicator.disable();
-            uiVirtualSelectController.onLoadedCallback({});
+            uiVirtualSelectController.onLoadedCallback();
           });
         }
       }
