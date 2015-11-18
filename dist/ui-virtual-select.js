@@ -56,6 +56,8 @@ angular.module('uiVirtualSelect', []).directive('uiVirtualSelect', ['$timeout', 
     var clickedOutsideElement = true;
     var activeItemIndex = 0;
     var _itemModels = [];
+    var extendedModeEnabled = false;
+    var forceRender = false;
 
     var ItemModel = function ItemModel(value, index) {
       _classCallCheck(this, ItemModel);
@@ -147,6 +149,11 @@ angular.module('uiVirtualSelect', []).directive('uiVirtualSelect', ['$timeout', 
             return selectActiveItem();
           case Keys.Escape:
             return cancel();
+          case 17:
+            extendedModeEnabled = !extendedModeEnabled;
+            forceRender = true;
+            updateView();
+            break;
           default:
             clickedOutsideElement = true;
         }
@@ -264,8 +271,9 @@ angular.module('uiVirtualSelect', []).directive('uiVirtualSelect', ['$timeout', 
         var itemIndex = itemModel.index;
 
         var itemIdentity = identityFn(item);
-        if (itemIdentity !== $itemElement.data('identity')) {
-          $itemElement.data('identity', itemIdentity).data('index', itemIndex).data('item', item).text(displayTextFn(item));
+        if (itemIdentity !== $itemElement.data('identity') || forceRender) {
+          var displayText = displayTextFn(item, extendedModeEnabled);
+          $itemElement.data('identity', itemIdentity).data('index', itemIndex).data('item', item).attr('title', displayText).text(displayText);
         }
         if (itemIndex === activeItemIndex && !$itemElement.hasClass('active')) {
           $activeItem.removeClass('active');
@@ -275,6 +283,8 @@ angular.module('uiVirtualSelect', []).directive('uiVirtualSelect', ['$timeout', 
 
       // remove unused elements
       $canvas.children('.ui-virtual-select--item').slice(_itemModels.length).remove();
+
+      forceRender = false;
     }
 
     function selectItem(index) {

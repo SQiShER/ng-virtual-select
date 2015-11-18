@@ -48,6 +48,8 @@ angular.module('uiVirtualSelect', [])
       let clickedOutsideElement = true;
       let activeItemIndex = 0;
       let _itemModels = [];
+      let extendedModeEnabled = false;
+      let forceRender = false;
 
       class ItemModel {
         constructor(value, index) {
@@ -135,6 +137,11 @@ angular.module('uiVirtualSelect', [])
               return selectActiveItem();
             case Keys.Escape:
               return cancel();
+            case 17:
+              extendedModeEnabled = !extendedModeEnabled;
+              forceRender = true;
+              updateView();
+              break;
             default:
               clickedOutsideElement = true;
           }
@@ -240,12 +247,14 @@ angular.module('uiVirtualSelect', [])
           const {identity: identityFn, displayText: displayTextFn} = uiVirtualSelectController.optionsProvider;
           const {value: item, index: itemIndex} = itemModel;
           const itemIdentity = identityFn(item);
-          if (itemIdentity !== $itemElement.data('identity')) {
+          if (itemIdentity !== $itemElement.data('identity') || forceRender) {
+            var displayText = displayTextFn(item, extendedModeEnabled)
             $itemElement
               .data('identity', itemIdentity)
               .data('index', itemIndex)
               .data('item', item)
-              .text(displayTextFn(item));
+              .attr('title', displayText)
+              .text(displayText);
           }
           if (itemIndex === activeItemIndex && !$itemElement.hasClass('active')) {
             $activeItem.removeClass('active');
@@ -258,6 +267,8 @@ angular.module('uiVirtualSelect', [])
           .children('.ui-virtual-select--item')
           .slice(_itemModels.length)
           .remove();
+
+        forceRender = false;
       }
 
       function selectItem(index) {

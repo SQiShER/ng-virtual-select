@@ -68,8 +68,13 @@ angular.module('app', ['uiVirtualSelect'])
     DataProvider.prototype.identity = function(item) {
       return item.id;
     };
-    DataProvider.prototype.displayText = function(item) {
-      return item && item.name;
+    DataProvider.prototype.displayText = function(item, extended) {
+      if (item) {
+        console.log(extended);
+        return extended ? item.name + ' (' + item.id + ')' : item.name;
+      } else {
+        return '';
+      }
     };
     DataProvider.prototype.noSelectionText = function() {
       return 'Please choose';
