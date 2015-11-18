@@ -1,18 +1,19 @@
 {
-	"globals": {
-		"angular": true,
-		"_": true,
-		"$": true
-	},
-	"rules": {
-		"linebreak-style": [2, "unix"],
-		"semi": [2, "always"],
-		"no-console": 0,
-		"array-bracket-spacing": [2, "never"]
-	},
-	"env": {
-		"browser": true,
-		"es6": true
-	},
-	"extends": "eslint:recommended"
+  "globals": {
+    "angular": true,
+    "_": true,
+    "$": true
+  },
+  "rules": {
+    "linebreak-style": [2, "unix"],
+    "semi": [2, "always"],
+    "no-console": 0,
+    "array-bracket-spacing": [2, "never"],
+    "no-use-before-define": 2
+  },
+  "env": {
+    "browser": true,
+    "es6": true
+  },
+  "extends": "eslint:recommended"
 }

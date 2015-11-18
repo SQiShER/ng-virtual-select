@@ -248,7 +248,7 @@ angular.module('uiVirtualSelect', [])
           const {value: item, index: itemIndex} = itemModel;
           const itemIdentity = identityFn(item);
           if (itemIdentity !== $itemElement.data('identity') || forceRender) {
-            var displayText = displayTextFn(item, extendedModeEnabled)
+            var displayText = displayTextFn(item, extendedModeEnabled);
             $itemElement
               .data('identity', itemIdentity)
               .data('index', itemIndex)
