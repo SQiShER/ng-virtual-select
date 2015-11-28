@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>jquery-virtual-select</title>
+	<link rel="stylesheet" href="main.css">
+	<link rel="stylesheet" href="../dist/ui-virtual-select.css">
+</head>
+
+<body>
+
+	<script src="../node_modules/lodash/index.js"></script>
+	<script src="../node_modules/jquery/dist/jquery.min.js"></script>
+	<script src="../node_modules/q/q.js"></script>
+	<script src="../dist/virtual-select.jquery.js"></script>
+	<script src="app.js"></script>
+
+	<div>
+		<p>
+			<input type="button" id="reset" value="Reset selection">
+			<input type="button" id="focus" value="Focus!">
+			<input type="button" id="fetch" value="Pre-load!">
+		</p>
+
+		<div class="virtual-select"></div>
+
+		<p class="virtual-select--selection"></p>
+	</div>
+
+</body>
+
+</html>

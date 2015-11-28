@@ -32,10 +32,20 @@ gulp.task('templates', () => {
     .pipe(gulp.dest(options.tempDir));
 });
 
-gulp.task('javascript', ['templates'], () => {
-  return gulp.src(['src/*.js', options.tempDir + '/ui-virtual-select.tpl.js'])
+gulp.task('javascript', ['templates', 'javascript:jquery'], () => {
+  return gulp.src(['src/ui-virtual-select.js', options.tempDir + '/ui-virtual-select.tpl.js'])
     .pipe(sourcemaps.init())
     .pipe(concat('ui-virtual-select.js'))
+    .pipe(babel({
+      presets: ['es2015']
+    }))
+    .pipe(sourcemaps.write('.'))
+    .pipe(gulp.dest(options.buildDir));
+});
+
+gulp.task('javascript:jquery', () => {
+  return gulp.src(['src/virtual-select.jquery.js'])
+    .pipe(sourcemaps.init())
     .pipe(babel({
       presets: ['es2015']
     }))

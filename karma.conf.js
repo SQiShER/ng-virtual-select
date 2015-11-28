@@ -10,7 +10,7 @@ module.exports = function(config) {
 
     // frameworks to use
     // available frameworks: https://npmjs.org/browse/keyword/karma-adapter
-    frameworks: ['mocha', 'chai', 'chai-sinon', 'jquery-chai'],
+    frameworks: ['chai-sinon', 'jquery-chai', 'chai-as-promised', 'chai', 'mocha'],
 
 
     // list of files / patterns to load in the browser
@@ -19,6 +19,7 @@ module.exports = function(config) {
       'https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js',
       'https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.4.7/angular.min.js',
       'https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.4.7/angular-mocks.js',
+      'node_modules/babel-polyfill/dist/polyfill.js',
       'src/*.js',
       'src/*.html',
       'test/*.spec.js'
@@ -63,7 +64,7 @@ module.exports = function(config) {
 
     // start these browsers
     // available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
-    browsers: ['Chrome'],
+    browsers: ['PhantomJS'],
 
 
     // Continuous Integration mode
@@ -96,12 +97,17 @@ module.exports = function(config) {
     },
 
 
-    client: {
-      captureConsole: true,
-      mocha: {
-        bail: true
-      }
-    }
+    specReporter: {
+      suppressSkipped: true
+    },
+
+
+    // client: {
+    //   captureConsole: true,
+    //   mocha: {
+    //     bail: true
+    //   }
+    // }
 
   })
 }

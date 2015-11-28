@@ -12,7 +12,8 @@ angular.module('uiVirtualSelect', []).directive('uiVirtualSelect', ['$timeout', 
     ArrowUp: 38,
     ArrowDown: 40,
     Enter: 13,
-    Escape: 27
+    Escape: 27,
+    Control: 17
   };
 
   function controllerFn() {
@@ -112,6 +113,17 @@ angular.module('uiVirtualSelect', []).directive('uiVirtualSelect', ['$timeout', 
       }
     }
 
+    function close() {
+      $items.hide();
+      $select.removeClass('open');
+      uiVirtualSelectController.onCloseCallback();
+    }
+
+    function open() {
+      $items.show();
+      $select.addClass('open');
+    }
+
     $searchInput.on('focus', function () {
       doLoad().then(function () {
         updateView();
@@ -149,7 +161,7 @@ angular.module('uiVirtualSelect', []).directive('uiVirtualSelect', ['$timeout', 
             return selectActiveItem();
           case Keys.Escape:
             return cancel();
-          case 17:
+          case Keys.Control:
             extendedModeEnabled = !extendedModeEnabled;
             forceRender = true;
             updateView();
@@ -212,6 +224,14 @@ angular.module('uiVirtualSelect', []).directive('uiVirtualSelect', ['$timeout', 
       selectItem(activeItemIndex);
     }
 
+    function clearSearchInput(omitBlur) {
+      uiVirtualSelectController.optionsProvider.filter('');
+      $searchInput.val('');
+      if (!omitBlur) {
+        $searchInput.trigger('blur');
+      }
+    }
+
     function cancel() {
       clearSearchInput();
       close();
@@ -223,14 +243,6 @@ angular.module('uiVirtualSelect', []).directive('uiVirtualSelect', ['$timeout', 
 
       scrollTop = Math.max(0, index) * itemHeight;
       $items.scrollTop(scrollTop);
-    }
-
-    function clearSearchInput(omitBlur) {
-      uiVirtualSelectController.optionsProvider.filter('');
-      $searchInput.val('');
-      if (!omitBlur) {
-        $searchInput.trigger('blur');
-      }
     }
 
     function indexOfItem(itemToFind) {
@@ -363,17 +375,6 @@ angular.module('uiVirtualSelect', []).directive('uiVirtualSelect', ['$timeout', 
       activeItemIndex = scrollIndex;
       updateView();
       scrollTo(scrollIndex);
-    }
-
-    function close() {
-      $items.hide();
-      $select.removeClass('open');
-      uiVirtualSelectController.onCloseCallback();
-    }
-
-    function open() {
-      $items.show();
-      $select.addClass('open');
     }
 
     ngModelController.$render = function () {

@@ -1,5 +1,224 @@
 'use strict';
 
+class VirtualSelectComponentObject {
+  constructor(element) {
+    this.element = element;
+  }
+  get containerClass() {
+    return 'ui-virtual-select';
+  }
+  get container() {
+    return this.element.find(`.${this.containerClass}`);
+  }
+  get itemsClass() {
+    return 'ui-virtual-select--items';
+  }
+  get items() {
+    return this.element.find(`.${this.itemsClass}`);
+  }
+  get loadingIndicatorClass() {
+    return 'ui-virtual-select--loading-indicator';
+  }
+  get loadingIndicator() {
+    return this.element.find(`.${this.loadingIndicatorClass}`);
+  }
+  get searchInputClass() {
+    return 'ui-virtual-select--search-input';
+  }
+  get searchInput() {
+    return this.element.find(`.${this.searchInputClass}`);
+  }
+  get canvasClass() {
+    return 'ui-virtual-select--canvas';
+  }
+  get canvas() {
+    return this.element.find(`.${this.canvasClass}`);
+  }
+}
+
+describe.skip(`$.fn.virtualselect`, () => {
+  let element, componentObject;
+
+  beforeEach(() => {
+    element = $(`<div class="test-container"></div>`);
+    element.appendTo(document.body);
+    componentObject = new VirtualSelectComponentObject(element);
+  });
+
+  afterEach(() => {
+    element.remove();
+  });
+
+  it(`assigns an instance of the virtual select plugin to the element`, () => {
+    expect(element.data(`plugin_virtualselect`)).to.be.undefined;
+    element.virtualselect();
+    expect(element.data(`plugin_virtualselect`)).to.be.an('object');
+  });
+
+  it(`inserts the template as body of the element it is called on`, () => {
+    const descendants = [
+      `.${componentObject.containerClass}`,
+      `.${componentObject.searchInputClass}`,
+      `.${componentObject.loadingIndicatorClass}`,
+      `.${componentObject.itemsClass}`,
+      `.${componentObject.canvasClass}`
+    ];
+    element.virtualselect();
+    descendants.forEach((descendant) => {
+      element.should.have.descendants(descendant);
+    })
+  });
+
+  it(`should initially hide loading indicator`, () => {
+    element.virtualselect();
+    expect(componentObject.loadingIndicator).not.to.be.visible;
+  });
+
+  it(`should initially hide items`, () => {
+    element.virtualselect();
+    expect(componentObject.items).not.to.be.visible;
+  });
+
+  describe(`when the search input gains focus`, () => {
+    let dataProvider;
+    beforeEach(() => {
+      dataProvider = {
+        load: sinon.stub().returns(new Promise(() => {
+        }))
+      };
+      element.virtualselect({
+        dataProvider
+      });
+    });
+
+    it(`should show loading indicator`, () => {
+      componentObject.searchInput.focus();
+      expect(componentObject.loadingIndicator).to.be.visible;
+    });
+
+    it(`should add 'loading' class to container`, () => {
+      componentObject.searchInput.focus();
+      expect(componentObject.container).to.have.class('loading');
+    });
+
+    it(`should call 'load' function of data provider`, () => {
+      componentObject.searchInput.focus();
+      expect(dataProvider.load).to.have.been.called;
+    });
+
+    describe(`and loading was successful`, () => {
+
+      beforeEach(() => {
+        dataProvider.load.returns(Promise.resolve());
+        dataProvider.get = sinon.stub().returns([]);
+      });
+
+      it(`should hide loading indicator`, (done) => {
+        componentObject.searchInput.focus();
+        setTimeout(() => {
+          expect(componentObject.loadingIndicator).to.be.hidden;
+          done();
+        }, 1);
+      });
+
+      it(`should remove 'loading' class from container`, (done) => {
+        componentObject.searchInput.focus();
+        setTimeout(() => {
+          expect(componentObject.container).not.to.have.class('loading');
+          done();
+        }, 1);
+      });
+
+      it(`refocussing the search input should not call 'load' function of data provider again`, (done) => {
+        componentObject.searchInput.focus();
+        expect(dataProvider.load).to.have.been.calledOnce;
+        setTimeout(() => {
+          componentObject.searchInput.blur();
+          componentObject.searchInput.focus();
+          expect(dataProvider.load).to.have.been.calledOnce;
+          done();
+        }, 1);
+      });
+
+      it(`should show the items`, (done) => {
+        componentObject.searchInput.focus();
+        setTimeout(() => {
+          expect(componentObject.items).to.be.visible;
+          done();
+        }, 1);
+      });
+
+      it(`should add 'open' class to the container`, (done) => {
+        componentObject.searchInput.focus();
+        setTimeout(() => {
+          expect(componentObject.container).to.have.class('open');
+          done();
+        }, 1);
+      });
+
+      it(`should render the first 30 items`, (done) => {
+        componentObject.searchInput.focus();
+        setTimeout(() => {
+          expect(dataProvider.get).to.have.been.calledWith(0, 30);
+          done();
+        }, 1);
+      });
+    });
+  });
+
+  describe(`given search input has focus and items have been successfully loaded`, () => {
+    let dataProvider;
+    beforeEach((done) => {
+      let items = [];
+      for (let i = 0; i < 100; i++) {
+        items.push(i)
+      }
+      dataProvider = {
+        items,
+        load: sinon.stub().returns(Promise.resolve()),
+        get(firstIndex, endIndex) {
+          return this.items.slice(firstIndex, endIndex)
+        },
+        identity(item) {
+          return item;
+        },
+        displayText(item) {
+          return `Item ${item}`;
+        }
+      };
+      element.virtualselect({
+        dataProvider,
+        itemHeight: 30
+      });
+      componentObject.searchInput.focus();
+      setTimeout(done, 1);
+    });
+    it(`should render no more than the maximum number of rendered items`, () => {
+      expect(componentObject.canvas.find('.ui-virtual-select--item')).to.have.length(30);
+    });
+    it(`should set the proper item text`, () => {
+      expect(componentObject.canvas.find('.ui-virtual-select--item:eq(0)')).to.have.text('Item 0');
+    });
+    it(`should set the item text as title attribute`, () => {
+      expect(componentObject.canvas.find('.ui-virtual-select--item:eq(0)')).to.have.attr('title', 'Item 0');
+    });
+    it(`should add the 'active' class to the active item`, () => {
+      expect(componentObject.canvas.find('.ui-virtual-select--item:eq(0)')).to.have.class('active');
+      expect(componentObject.canvas.find('.ui-virtual-select--item:eq(1)')).not.to.have.class('active');
+    });
+    it(`should adjust 'canvas' height to fit the total number of items`, () => {
+      expect(componentObject.canvas).to.have.css(`height`, '3000px');
+      expect(componentObject.canvas).to.have.css(`margin-top`, '0px');
+    });
+    it(`should adjust 'items' height to fit the maximum number of visible items`, () => {
+      expect(componentObject.items).to.have.css(`height`, '300px');
+    });
+    it(`should scroll to the active item`);
+    it(`should remove rendered items from the DOM when necessary`);
+  });
+
+});
+
 describe('directive', () => {
 
   let Context;
