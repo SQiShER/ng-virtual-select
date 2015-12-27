@@ -4,6 +4,7 @@
     "_": true,
     "$": true
   },
+  "ecmaFeatures": { "modules": true },
   "rules": {
     "linebreak-style": [2, "unix"],
     "semi": [2, "always"],

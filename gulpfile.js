@@ -6,6 +6,7 @@ const gulp = require('gulp'),
   babel = require('gulp-babel'),
   del = require('del'),
   path = require('path'),
+  jspm = require('gulp-jspm'),
   KarmaServer = require('karma').Server;
 
 const options = {
@@ -32,7 +33,7 @@ gulp.task('templates', () => {
     .pipe(gulp.dest(options.tempDir));
 });
 
-gulp.task('javascript', ['templates', 'javascript:jquery'], () => {
+gulp.task('javascript', ['templates', 'javascript:jspm'], () => {
   return gulp.src(['src/ui-virtual-select.js', options.tempDir + '/ui-virtual-select.tpl.js'])
     .pipe(sourcemaps.init())
     .pipe(concat('ui-virtual-select.js'))
@@ -48,6 +49,16 @@ gulp.task('javascript:jquery', () => {
     .pipe(sourcemaps.init())
     .pipe(babel({
       presets: ['es2015']
+    }))
+    .pipe(sourcemaps.write('.'))
+    .pipe(gulp.dest(options.buildDir));
+});
+
+gulp.task('javascript:jspm', () => {
+  return gulp.src('src/virtual-select.jquery.js')
+    .pipe(sourcemaps.init())
+    .pipe(jspm({
+      selfExecutingBundle: true
     }))
     .pipe(sourcemaps.write('.'))
     .pipe(gulp.dest(options.buildDir));

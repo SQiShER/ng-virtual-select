@@ -29,9 +29,11 @@
     "gulp-autoprefixer": "^3.1.0",
     "gulp-babel": "^6.1.0",
     "gulp-concat": "^2.6.0",
+    "gulp-jspm": "^0.5.5",
     "gulp-sourcemaps": "^1.6.0",
     "jasmine-core": "^2.3.4",
     "jquery": "^2.1.4",
+    "jspm": "^0.16.19",
     "karma": "^0.13.15",
     "karma-babel-preprocessor": "^6.0.1",
     "karma-chai": "^0.1.0",
@@ -56,5 +58,13 @@
     "jquery": "^2.1.4",
     "lodash": "^3.10.1",
     "q": "^1.4.1"
+  },
+  "jspm": {
+    "dependencies": {},
+    "devDependencies": {
+      "babel": "npm:babel-core@^5.8.24",
+      "babel-runtime": "npm:babel-runtime@^5.8.24",
+      "core-js": "npm:core-js@^1.1.4"
+    }
   }
 }
