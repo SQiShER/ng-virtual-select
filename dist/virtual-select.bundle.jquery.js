@@ -1443,28 +1443,6 @@ $__System.registerDynamic("10", ["e", "16", "12"], true, function($__require, ex
   return module.exports;
 });
 
-$__System.registerDynamic("e", [], true, function($__require, exports, module) {
-  ;
-  var global = this,
-      __define = global.define;
-  global.define = undefined;
-  var $Object = Object;
-  module.exports = {
-    create: $Object.create,
-    getProto: $Object.getPrototypeOf,
-    isEnum: {}.propertyIsEnumerable,
-    getDesc: $Object.getOwnPropertyDescriptor,
-    setDesc: $Object.defineProperty,
-    setDescs: $Object.defineProperties,
-    getKeys: $Object.keys,
-    getNames: $Object.getOwnPropertyNames,
-    getSymbols: $Object.getOwnPropertySymbols,
-    each: [].forEach
-  };
-  global.define = __define;
-  return module.exports;
-});
-
 $__System.registerDynamic("32", [], true, function($__require, exports, module) {
   ;
   var global = this,
@@ -2086,7 +2064,394 @@ $__System.registerDynamic("3c", ["3b"], true, function($__require, exports, modu
   return module.exports;
 });
 
-$__System.register("3d", [], function (_export) {
+$__System.register('3d', ['3e'], function (_export) {
+  'use strict';
+
+  var $, actions;
+
+  function startSelection(state, _ref) {
+    var dataProvider = _ref.dataProvider;
+    var items = dataProvider.availableItems;
+
+    var selectedItemIndex = state.selectedItem ? items.findIndex(function (item) {
+      return dataProvider.identity(item) === dataProvider.identity(state.selectedItem);
+    }) : -1;
+    return $.extend({}, state, {
+      open: true,
+      activeItemIndex: selectedItemIndex >= 0 ? selectedItemIndex : 0,
+      selectedItemIndex: selectedItemIndex
+    });
+  }
+
+  function activatePreviousItem(state) {
+    return $.extend({}, state, {
+      activeItemIndex: Math.max(state.activeItemIndex - 1, 0)
+    });
+  }
+
+  function activateNextItem(state, options) {
+    return $.extend({}, state, {
+      activeItemIndex: Math.min(state.activeItemIndex + 1, options.dataProvider.items.length - 1)
+    });
+  }
+
+  function activateItemAtIndex(state, options, index) {
+    return $.extend({}, state, {
+      activeItemIndex: index
+    });
+  }
+
+  function cancelSelection(state, options) {
+    var targetState = changeQuery(state, options, '');
+    targetState.open = false;
+    return targetState;
+  }
+
+  function selectItemAtIndex(state, options, index) {
+    var selectedItem = options.dataProvider.items[index];
+
+    // the index must be adjusted to represent the item in the availableItems array
+    var selectedItemIndex = selectedItem ? options.dataProvider.availableItems.findIndex(function (item) {
+      return options.dataProvider.identity(item) === options.dataProvider.identity(selectedItem);
+    }) : -1;
+
+    var targetState = cancelSelection(state, options);
+    targetState.selectedItem = selectedItem;
+    targetState.selectedItemIndex = selectedItemIndex;
+    return targetState;
+  }
+
+  function selectActiveItem(state, options) {
+    var index = state.activeItemIndex;
+    return selectItemAtIndex(state, options, index);
+  }
+
+  function toggleExtendedMode(state) {
+    return $.extend({}, state, {
+      extendedModeEnabled: !state.extendedModeEnabled
+    });
+  }
+
+  function changeQuery(state, options, query) {
+    if (query !== state.query) {
+      options.dataProvider.filter(query);
+      return $.extend({}, state, {
+        query: query,
+        activeItemIndex: 0
+      });
+    } else {
+      return state;
+    }
+  }
+
+  function startLoading(state) {
+    return $.extend({}, state, {
+      itemsLoading: true
+    });
+  }
+
+  function finishLoading(state) {
+    return $.extend({}, state, {
+      itemsLoading: false,
+      itemsLoaded: true
+    });
+  }
+
+  return {
+    setters: [function (_e) {
+      $ = _e['default'];
+    }],
+    execute: function () {
+      actions = {
+        startSelection: startSelection,
+        cancelSelection: cancelSelection,
+        changeQuery: changeQuery,
+        activateItemAtIndex: activateItemAtIndex,
+        activatePreviousItem: activatePreviousItem,
+        activateNextItem: activateNextItem,
+        selectItemAtIndex: selectItemAtIndex,
+        selectActiveItem: selectActiveItem,
+        toggleExtendedMode: toggleExtendedMode,
+        startLoading: startLoading,
+        finishLoading: finishLoading
+      };
+
+      _export('default', actions);
+    }
+  };
+});
+$__System.register('3f', ['3e'], function (_export) {
+  'use strict';
+
+  var $;
+
+  function Container(options) {
+    this.options = options;
+    this.init();
+  }
+
+  return {
+    setters: [function (_e) {
+      $ = _e['default'];
+    }],
+    execute: function () {
+      Container.prototype.init = function () {
+        this.element = this.$container = $('<div/>').addClass('ui-virtual-select');
+      };
+
+      Container.prototype.render = function (state) {
+
+        // toggle loading indicator and class
+        if (state.itemsLoading) {
+          this.$container.addClass('loading');
+        } else {
+          this.$container.removeClass('loading');
+        }
+
+        // toggle open state and class
+        if (state.open) {
+          this.$container.addClass('open');
+        } else {
+          this.$container.removeClass('open');
+        }
+      };
+
+      _export('default', Container);
+    }
+  };
+});
+$__System.register('40', ['3e'], function (_export) {
+  'use strict';
+
+  var $;
+
+  function LoadingIndicator(options) {
+    this.options = options;
+    this.renderedState = {};
+    this.init();
+  }
+
+  return {
+    setters: [function (_e) {
+      $ = _e['default'];
+    }],
+    execute: function () {
+      LoadingIndicator.prototype.init = function () {
+        this.element = this.$loadingIndicator = $('<div/>').addClass('ui-virtual-select--loading-indicator').text('Loading...').hide();
+      };
+
+      LoadingIndicator.prototype.render = function (state) {
+
+        // toggle loading indicator and class
+        if (state.itemsLoading) {
+          this.$loadingIndicator.show();
+        } else {
+          this.$loadingIndicator.hide();
+        }
+
+        // this.renderedState = state;
+        this.renderedState = $.extend({}, state);
+      };
+
+      _export('default', LoadingIndicator);
+    }
+  };
+});
+$__System.registerDynamic("e", [], true, function($__require, exports, module) {
+  ;
+  var global = this,
+      __define = global.define;
+  global.define = undefined;
+  var $Object = Object;
+  module.exports = {
+    create: $Object.create,
+    getProto: $Object.getPrototypeOf,
+    isEnum: {}.propertyIsEnumerable,
+    getDesc: $Object.getOwnPropertyDescriptor,
+    setDesc: $Object.defineProperty,
+    setDescs: $Object.defineProperties,
+    getKeys: $Object.keys,
+    getNames: $Object.getOwnPropertyNames,
+    getSymbols: $Object.getOwnPropertySymbols,
+    each: [].forEach
+  };
+  global.define = __define;
+  return module.exports;
+});
+
+$__System.registerDynamic("41", ["e"], true, function($__require, exports, module) {
+  ;
+  var global = this,
+      __define = global.define;
+  global.define = undefined;
+  var $ = $__require('e');
+  module.exports = function defineProperty(it, key, desc) {
+    return $.setDesc(it, key, desc);
+  };
+  global.define = __define;
+  return module.exports;
+});
+
+$__System.registerDynamic("42", ["41"], true, function($__require, exports, module) {
+  ;
+  var global = this,
+      __define = global.define;
+  global.define = undefined;
+  module.exports = {
+    "default": $__require('41'),
+    __esModule: true
+  };
+  global.define = __define;
+  return module.exports;
+});
+
+$__System.registerDynamic("43", ["42"], true, function($__require, exports, module) {
+  "use strict";
+  ;
+  var global = this,
+      __define = global.define;
+  global.define = undefined;
+  var _Object$defineProperty = $__require('42')["default"];
+  exports["default"] = function(obj, key, value) {
+    if (key in obj) {
+      _Object$defineProperty(obj, key, {
+        value: value,
+        enumerable: true,
+        configurable: true,
+        writable: true
+      });
+    } else {
+      obj[key] = value;
+    }
+    return obj;
+  };
+  exports.__esModule = true;
+  global.define = __define;
+  return module.exports;
+});
+
+$__System.register("44", [], function (_export) {
+  "use strict";
+
+  var CursorUp, CursorDown, Enter, Escape, Control;
+  return {
+    setters: [],
+    execute: function () {
+      CursorUp = 38;
+
+      _export("CursorUp", CursorUp);
+
+      CursorDown = 40;
+
+      _export("CursorDown", CursorDown);
+
+      Enter = 13;
+
+      _export("Enter", Enter);
+
+      Escape = 27;
+
+      _export("Escape", Escape);
+
+      Control = 17;
+
+      _export("Control", Control);
+    }
+  };
+});
+$__System.register('45', ['43', '44', '46', '3e'], function (_export) {
+  var _defineProperty, CursorUp, CursorDown, Escape, Enter, Control, noop, $;
+
+  function SearchInput(options) {
+    this.options = options;
+    this.channels = {
+      'focus': noop,
+      'blur': noop,
+      'change': noop,
+      'activate_next_item': noop,
+      'activate_previous_item': noop,
+      'select_active_item': noop,
+      'cancel_selection': noop,
+      'toggle_extended_mode': noop
+    };
+    this.renderedState = {};
+    this.init();
+  }
+
+  return {
+    setters: [function (_) {
+      _defineProperty = _['default'];
+    }, function (_2) {
+      CursorUp = _2.CursorUp;
+      CursorDown = _2.CursorDown;
+      Escape = _2.Escape;
+      Enter = _2.Enter;
+      Control = _2.Control;
+    }, function (_3) {
+      noop = _3['default'];
+    }, function (_e) {
+      $ = _e['default'];
+    }],
+    execute: function () {
+      'use strict';
+
+      SearchInput.prototype.on = function (channel, callback) {
+        this.channels[channel] = callback ? callback : noop;
+        return this;
+      };
+
+      SearchInput.prototype.init = function () {
+        var _keydownHandlers,
+            _this = this;
+
+        var keydownHandlers = (_keydownHandlers = {}, _defineProperty(_keydownHandlers, CursorUp, 'activate_previous_item'), _defineProperty(_keydownHandlers, CursorDown, 'activate_next_item'), _defineProperty(_keydownHandlers, Enter, 'select_active_item'), _defineProperty(_keydownHandlers, Escape, 'cancel_selection'), _defineProperty(_keydownHandlers, Control, 'toggle_extended_mode'), _keydownHandlers);
+
+        this.element = this.$searchInputElement = $('<input type="text"/>').addClass('ui-virtual-select--search-input').on('focus', function () {
+          _this.channels['focus']();
+        }).on('keydown', function (event) {
+          var key = event.which;
+          var channel = keydownHandlers[key];
+          if (channel) {
+            _this.channels[channel]();
+          }
+        }).on('blur', function () {
+          _this.channels['blur']();
+        }).on('keyup', function (event) {
+          var query = $(event.target).val();
+          _this.channels['change'](query);
+        });
+      };
+
+      SearchInput.prototype.render = function (state) {
+
+        // update placeholder
+        var dataProvider = this.options.dataProvider;
+        var displayText = state.selectedItem ? dataProvider.displayText(state.selectedItem) : dataProvider.noSelectionText();
+        if (displayText !== this.$searchInputElement.attr('placeholder')) {
+          console.debug('updating placeholder: ' + displayText);
+          this.$searchInputElement.attr('placeholder', displayText);
+        }
+
+        // update value
+        if (state.query !== this.$searchInputElement.val()) {
+          console.debug('updating query: ' + state.query);
+          this.$searchInputElement.val(state.query);
+        }
+
+        if (this.$searchInputElement.is(':focus') && !state.open && this.renderedState.open) {
+          console.debug('blurring search input');
+          this.$searchInputElement.trigger('blur');
+        }
+
+        // this.renderedState = state;
+        this.renderedState = $.extend({}, state);
+      };
+
+      _export('default', SearchInput);
+    }
+  };
+});
+$__System.register("3e", [], function (_export) {
   "use strict";
 
   return {
@@ -2096,110 +2461,159 @@ $__System.register("3d", [], function (_export) {
     }
   };
 });
-$__System.register('3e', [], function (_export) {
-  'use strict';
+$__System.register("46", [], function (_export) {
+  "use strict";
 
-  function Renderer(dom, options) {
-    this.dom = dom;
-    this.options = options;
-    this.renderedState = {};
-  }
+  function noop() {}
 
   return {
     setters: [],
     execute: function () {
-      Renderer.prototype.render = function (state) {
+      _export("default", noop);
+    }
+  };
+});
+$__System.register('47', ['46', '3e'], function (_export) {
+  'use strict';
+
+  var noop, $;
+
+  function OptionList(options) {
+    this.options = options;
+    this.channels = {
+      select: noop,
+      activate: noop
+    };
+    this.lastMouseX = NaN;
+    this.lastMouseY = NaN;
+    this.init();
+  }
+
+  return {
+    setters: [function (_2) {
+      noop = _2['default'];
+    }, function (_e) {
+      $ = _e['default'];
+    }],
+    execute: function () {
+      OptionList.prototype.onlyIfMousePositionChanged = function (callback) {
         var _this = this;
+
+        return function (event) {
+          // workaround to prevent scripted scrolling from triggering mousemove events
+          var previousX = _this.lastMouseX;
+          var previousY = _this.lastMouseY;
+          var currentX = event.pageX;
+          var currentY = event.pageY;
+
+          return currentX !== previousX || currentY !== previousY ? callback(event) : noop();
+        };
+      };
+
+      OptionList.prototype.on = function (channel, callback) {
+        this.channels[channel] = callback ? callback : noop;
+        return this;
+      };
+
+      OptionList.prototype.init = function () {
+        var _this2 = this;
+
+        var $items = $('<div/>').addClass('ui-virtual-select--items').css('overflow-y', 'scroll').on('scroll', _.throttle(function () {
+          _this2.render();
+        }, 10)).on('mousemove', function (event) {
+          _this2.lastMouseX = event.pageX;
+          _this2.lastMouseY = event.pageY;
+        }).on('mousedown', function (event) {
+          /* prevent blur event when clicking options */
+          if ($.contains($items.get(0), event.target)) {
+            console.log('preventing default');
+            event.preventDefault();
+          }
+        }).hide();
+
+        var $canvas = $('<div/>').addClass('ui-virtual-select--canvas').appendTo($items).on('mousemove', '.ui-virtual-select--item', this.onlyIfMousePositionChanged(function (event) {
+          var index = $(event.currentTarget).data('index');
+          if (index !== _this2.renderedState.activeItemIndex) {
+            _this2.channels['activate'](index);
+          }
+        })).on('click', '.ui-virtual-select--item', function (event) {
+          var index = $(event.currentTarget).data('index');
+          _this2.channels['select'](index);
+        });
+
+        this.element = this.$items = $items;
+        this.$canvas = $canvas;
+      };
+
+      OptionList.prototype.render = function (state) {
+        var _this3 = this;
 
         var self = this;
 
         if (arguments.length === 0) {
-          // re-render
           state = this.renderedState;
-        }
-
-        // update search input placeholder
-        if (state.itemsLoaded && state.selectedItemIndex !== this.renderedState.selectedItemIndex) {
-          var selectedItem = this.options.dataProvider.availableItems[state.selectedItemIndex];
-          var displayText = selectedItem ? this.options.dataProvider.displayText(selectedItem) : this.options.dataProvider.noSelectionText();
-          this.dom.$searchInput.attr('placeholder', displayText);
-        }
-
-        // toggle loading indicator and class
-        if (state.itemsLoading) {
-          this.dom.$loadingIndicator.show();
-          this.dom.$container.addClass('loading');
-        } else {
-          this.dom.$loadingIndicator.hide();
-          this.dom.$container.removeClass('loading');
         }
 
         // toggle open state and class
         if (state.open) {
-          this.dom.$items.show();
-          this.dom.$container.addClass('open');
+          this.$items.show();
         } else {
-          this.dom.$items.hide();
-          this.dom.$container.removeClass('open');
+          this.$items.hide();
         }
 
         if (state.open) {
           (function () {
 
-            // okay, i know this is not the best place for this, but I currently don't know where else to put it
-            if (state.query && state.query !== _this.renderedState.query) {
-              _this.options.dataProvider.filter(state.query);
-            }
-
             // adjust first item
-            var scrollPosition = _this.dom.$items.scrollTop();
-            var firstRenderedItemIndex = Math.max(Math.floor(scrollPosition / _this.options.itemHeight) - _this.options.maxVisibleItems, 0);
-
-            // adjust scroll position
-            if (state.activeItemIndex !== _this.renderedState.activeItemIndex) {
-              var canvasSize = Math.min(_this.options.dataProvider.items.length, _this.options.maxVisibleItems) * _this.options.itemHeight;
-              var targetScrollPosition = state.activeItemIndex * _this.options.itemHeight;
-              var a1 = Math.ceil(scrollPosition / _this.options.itemHeight) * _this.options.itemHeight;
-              var a2 = Math.floor(scrollPosition / _this.options.itemHeight) * _this.options.itemHeight + canvasSize;
-              if (targetScrollPosition <= a1) {
-                _this.dom.$items.scrollTop(targetScrollPosition);
-              } else if (targetScrollPosition >= a2) {
-                _this.dom.$items.scrollTop(targetScrollPosition - canvasSize + _this.options.itemHeight);
-              }
-            }
-
-            var items = _this.options.dataProvider.get(firstRenderedItemIndex, firstRenderedItemIndex + _this.options.maxRenderedItems);
+            var scrollPosition = _this3.$items.scrollTop();
+            var firstRenderedItemIndex = Math.max(Math.floor(scrollPosition / _this3.options.itemHeight) - _this3.options.maxVisibleItems, 0);
 
             // update items height
-            var itemsElementHeight = Math.min(_this.options.maxVisibleItems, _this.options.dataProvider.items.length) * _this.options.itemHeight;
-            _this.dom.$items.css({
+            var itemsElementHeight = Math.min(_this3.options.maxVisibleItems, _this3.options.dataProvider.items.length) * _this3.options.itemHeight;
+            _this3.$items.css({
               height: itemsElementHeight + 'px'
             });
 
             // update canvas size
-            var firstVisibleItemIndex = Math.max(Math.floor(_this.dom.$items.scrollTop() / _this.options.itemHeight) - _this.options.maxVisibleItems, 0);
-            var canvasElementMarginTop = firstVisibleItemIndex * _this.options.itemHeight;
-            var canvasElementHeight = _this.options.dataProvider.items.length * _this.options.itemHeight - firstVisibleItemIndex * _this.options.itemHeight;
-            _this.dom.$canvas.css({
+            var firstVisibleItemIndex = Math.max(Math.floor(_this3.$items.scrollTop() / _this3.options.itemHeight) - _this3.options.maxVisibleItems, 0);
+            var canvasElementMarginTop = firstVisibleItemIndex * _this3.options.itemHeight;
+            var canvasElementHeight = _this3.options.dataProvider.items.length * _this3.options.itemHeight - firstVisibleItemIndex * _this3.options.itemHeight;
+            _this3.$canvas.css({
               'height': canvasElementHeight + 'px',
               'margin-top': canvasElementMarginTop + 'px'
             });
 
+            // adjust scroll position
+            if (state.activeItemIndex !== _this3.renderedState.activeItemIndex || !_this3.renderedState.open) {
+              var canvasSize = Math.min(_this3.options.dataProvider.items.length, _this3.options.maxVisibleItems) * _this3.options.itemHeight;
+              var targetScrollPosition = state.activeItemIndex * _this3.options.itemHeight;
+              var a1 = Math.ceil(scrollPosition / _this3.options.itemHeight) * _this3.options.itemHeight;
+              var a2 = Math.floor(scrollPosition / _this3.options.itemHeight) * _this3.options.itemHeight + canvasSize;
+              if (targetScrollPosition <= a1 || !_this3.renderedState.open) {
+                _this3.$items.scrollTop(targetScrollPosition);
+              } else if (targetScrollPosition >= a2) {
+                _this3.$items.scrollTop(targetScrollPosition - canvasSize + _this3.options.itemHeight);
+              }
+            }
+
+            // get items to render
+            var items = _this3.options.dataProvider.get(firstRenderedItemIndex, firstRenderedItemIndex + _this3.options.maxRenderedItems);
+
             // create dom elements if necessary
             items.forEach(function (item, index) {
-              var $itemElement = _this.dom.$canvas.children('.ui-virtual-select--item').eq(index);
+              var $itemElement = _this3.$canvas.children('.ui-virtual-select--item').eq(index);
               if ($itemElement.length === 0) {
-                $itemElement = $('<div/>').addClass('ui-virtual-select--item').appendTo(_this.dom.$canvas);
+                $itemElement = $('<div/>').addClass('ui-virtual-select--item').appendTo(_this3.$canvas);
               }
               // TODO Optimize?
-              $itemElement.data('item', item).data('index', firstRenderedItemIndex + index);
+              $itemElement.data('item', item).data('offset', firstRenderedItemIndex).data('index', firstRenderedItemIndex + index);
             });
 
             // remove excess dom elements
-            _this.dom.$canvas.children('.ui-virtual-select--item').slice(items.length).remove();
+            _this3.$canvas.children('.ui-virtual-select--item').slice(items.length).remove();
 
             // update text
-            _this.dom.$canvas.children('.ui-virtual-select--item').each(function () {
+            _this3.$canvas.children('.ui-virtual-select--item').each(function () {
               var $itemElement = $(this);
               var item = $itemElement.data('item');
               var displayText = self.options.dataProvider.displayText(item, state.extendedModeEnabled);
@@ -2211,282 +2625,179 @@ $__System.register('3e', [], function (_export) {
         }
 
         // change active class
-        this.dom.$canvas.children('.ui-virtual-select--item').each(function () {
+        this.$canvas.children('.ui-virtual-select--item').each(function () {
           var $itemElement = $(this);
-          if ($itemElement.data('index') === state.activeItemIndex && !$itemElement.hasClass('active')) {
+          var index = $itemElement.data('index');
+          var hasActiveClass = $itemElement.hasClass('active');
+          if (index === state.activeItemIndex && !hasActiveClass) {
             $itemElement.addClass('active');
           }
-          if ($itemElement.data('index') !== state.activeItemIndex && $itemElement.hasClass('active')) {
+          if (index !== state.activeItemIndex && hasActiveClass) {
             $itemElement.removeClass('active');
           }
         });
 
         // update state with rendered one
+        // this.renderedState = state;
         this.renderedState = $.extend({}, state);
-        return this.renderedState;
       };
 
-      _export('default', Renderer);
+      _export('default', OptionList);
     }
   };
 });
-$__System.register('3f', ['3c', '3d', '3e'], function (_export) {
-  var _Promise, $, Renderer, defaults, Keys;
+$__System.register('48', ['40', '45', '47', '3c', '3e', '3d', '3f'], function (_export) {
+  var LoadingIndicator, SearchInput, OptionList, _Promise, $, fn, Container;
 
-  function VirtualSelect(document, element, options) {
+  function detectItemHeight() {
+    var $sampleItem = $('<div/>').addClass('ui-virtual-select--item').text('Text').hide().appendTo(document.body);
+    var height = $sampleItem.outerHeight();
+    $sampleItem.remove();
+    return height;
+  }
 
-    var _options = $.extend({
-      itemHeight: detectItemHeight()
-    }, defaults, options);
+  function VirtualSelect(document, element, userOptions) {
 
-    var _state = {
+    var defaults = {
+      itemHeight: detectItemHeight(),
+      maxVisibleItems: 10,
+      maxRenderedItems: 30
+    };
+
+    var options = $.extend({}, defaults, userOptions);
+
+    var state = {
       activeItemIndex: 0,
+      selectedItem: null,
       selectedItemIndex: -1,
       query: '',
       itemsLoading: false,
       itemsLoaded: false,
-      open: false,
-      clickedOutsideElement: false,
-      lastMouseX: 0,
-      lastMouseY: 0
+      open: false
     };
 
-    function detectItemHeight() {
-      var $sampleItem = $('<div class="ui-virtual-select--item">Text</div>').hide().appendTo("body");
-      var height = $sampleItem.outerHeight();
-      $sampleItem.remove();
-      return height;
-    }
+    (function init() {
 
-    function indexOfItem() {
-      var itemToFind = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+      var containerComponent = new Container(options);
 
-      var dataProvider = _options.dataProvider;
-      var itemToFindIdentity = dataProvider.identity(itemToFind);
-      return dataProvider.availableItems.findIndex(function (item) {
-        return dataProvider.identity(item) === itemToFindIdentity;
-      });
-    }
-
-    function loadItems(state, options) {
-      if (state.itemsLoaded) {
-        return _Promise.resolve();
-      } else {
-        state.itemsLoading = true;
-        return options.dataProvider.load().then(function () {
-          state.itemsLoading = false;
-          state.itemsLoaded = true;
+      var searchInputComponent = new SearchInput(options).on('focus', function () {
+        console.log('focus');
+        loadItems(state, options).then(function () {
+          var targetState = fn.startSelection(state, options);
+          changeState(targetState);
         });
-      }
-    }
-
-    function initDOM($element) {
-      var $container = $('<div/>').addClass('ui-virtual-select');
-      $element.empty().append($container);
-
-      var $searchInput = $('<input type="text"/>').addClass('ui-virtual-select--search-input');
-      var $loadingIndicator = $('<div/>').addClass('ui-virtual-select--loading-indicator').text('Loading...').hide();
-      var $items = $('<div/>').addClass('ui-virtual-select--items').css('overflow-y', 'scroll').hide();
-      $container.append($searchInput, $loadingIndicator, $items);
-
-      var $canvas = $('<div/>').addClass('ui-virtual-select--canvas');
-      $items.append($canvas);
-
-      return {
-        $element: $element,
-        $searchInput: $searchInput,
-        $container: $container,
-        $loadingIndicator: $loadingIndicator,
-        $items: $items,
-        $canvas: $canvas
-      };
-    }
-
-    function startSelection(state) {
-      var selectedItemIndex = indexOfItem(state.selectedItem);
-      return $.extend(state, {
-        open: true,
-        activeItemIndex: selectedItemIndex >= 0 ? selectedItemIndex : 0,
-        selectedItemIndex: selectedItemIndex
-      });
-    }
-
-    function activatePreviousItem(state) {
-      return $.extend(state, {
-        activeItemIndex: Math.max(state.activeItemIndex - 1, 0)
-      });
-    }
-
-    function activateNextItem(state, options) {
-      return $.extend(state, {
-        activeItemIndex: Math.min(state.activeItemIndex + 1, options.dataProvider.items.length - 1)
-      });
-    }
-
-    function cancel(state) {
-      return $.extend(state, {
-        open: false,
-        query: ''
-      });
-    }
-
-    function selectActiveItem(state) {
-      var targetState = cancel(state);
-      targetState.selectedItemIndex = targetState.activeItemIndex + state.firstRenderedItemIndex;
-      return targetState;
-    }
-
-    function toggleExtendedMode(state) {
-      return $.extend(state, {
-        extendedModeEnabled: !state.extendedModeEnabled
-      });
-    }
-
-    function changeQuery(state, query) {
-      if (query !== state.query) {
-        return $.extend(state, {
-          query: query,
-          activeItemIndex: 0
-        });
-      } else {
-        return state;
-      }
-    }
-
-    function initDOMEventHandlers(dom, state, options, renderer) {
-
-      function noop() {}
-
-      function onlyAfterClickOutside(callback) {
-        return function () {
-          return _state.clickedOutsideElement ? callback() : noop();
-        };
-      }
-
-      function onlyIfMousePositionChanged(callback) {
-        return function (event) {
-          // workaround to prevent scripted scrolling from triggering mousemove events
-          var _state2 = _state;
-          var previousX = _state2.lastMouseX;
-          var previousY = _state2.lastMouseY;
-          var currentX = event.pageX;
-          var currentY = event.pageY;
-
-          return currentX !== previousX || currentY !== previousY ? callback(event) : noop();
-        };
-      }
-
-      $(document).on('mousedown', function (event) {
-        _state.clickedOutsideElement = !$.contains(element[0], event.target);
+      }).on('blur', function () {
+        console.log('blur');
+        var targetState = fn.cancelSelection(state, options);
+        changeState(targetState);
+      }).on('activate_previous_item', function () {
+        console.log('activate_previous_item');
+        var targetState = fn.activatePreviousItem(state, options);
+        changeState(targetState);
+      }).on('activate_next_item', function () {
+        console.log('activate_next_item');
+        var targetState = fn.activateNextItem(state, options);
+        changeState(targetState);
+      }).on('select_active_item', function () {
+        console.log('select_active_item');
+        var targetState = fn.selectActiveItem(state, options);
+        changeState(targetState);
+      }).on('cancel_selection', function () {
+        console.log('cancel_selection');
+        var targetState = fn.cancelSelection(state, options);
+        changeState(targetState);
+      }).on('toggle_extended_mode', function () {
+        console.log('toggle_extended_mode');
+        var targetState = fn.toggleExtendedMode(state, options);
+        changeState(targetState);
+      }).on('change', function (query) {
+        console.log('change');
+        var targetState = fn.changeQuery(state, options, query);
+        changeState(targetState);
       });
 
-      dom.$searchInput.on('focus', function () {
-        loadItems(_state, options).then(function () {
-          var targetState = startSelection(_state);
-          renderer.render(targetState);
-        });
-        renderer.render(_state);
-      }).on('keydown', function (event) {
-        var key = event.which;
-        switch (key) {
-          case Keys.ArrowUp:
-            renderer.render(activatePreviousItem(_state, options));
-            break;
-          case Keys.ArrowDown:
-            renderer.render(activateNextItem(_state, options));
-            break;
-          case Keys.Enter:
-            renderer.render(selectActiveItem(_state, options));
-            break;
-          case Keys.Escape:
-            renderer.render(cancel(_state, options));
-            break;
-          case Keys.Control:
-            renderer.render(toggleExtendedMode(_state, options));
-            break;
-          default:
-            _state.clickedOutsideElement = true;
-            renderer.render(_state);
-            break;
+      var loadingIndicatorComponent = new LoadingIndicator(options);
+
+      var optionListComponent = new OptionList(options).on('select', function (index) {
+        console.log('select');
+        var targetState = fn.selectItemAtIndex(state, options, index);
+        changeState(targetState);
+      }).on('activate', function (index) {
+        console.log('activate');
+        var targetState = fn.activateItemAtIndex(state, options, index);
+        changeState(targetState);
+      });
+
+      var $searchInput = searchInputComponent.element;
+      var $loadingIndicator = loadingIndicatorComponent.element;
+      var $optionList = optionListComponent.element;
+      var $container = containerComponent.element;
+      $container.append($searchInput, $loadingIndicator, $optionList);
+      element.empty().append($container);
+
+      function loadItems(state, options) {
+        if (state.itemsLoaded) {
+          return _Promise.resolve();
+        } else {
+          var targetState = fn.startLoading(state);
+          changeState(targetState);
+          return options.dataProvider.load().then(function () {
+            var targetState = fn.finishLoading(state);
+            changeState(targetState);
+          });
         }
-      }).on('blur', onlyAfterClickOutside(function () {
-        var targetState = cancel(_state, options);
-        renderer.render(targetState);
-      })).on('keyup', function (event) {
-        var query = $(event.target).val();
-        var targetState = changeQuery(_state, query);
-        renderer.render(targetState);
-      });
+      }
 
-      dom.$items.on('scroll', _.throttle(function () {
-        renderer.render();
-      }, 10));
+      function changeState(targetState) {
 
-      dom.$canvas.on('mousemove', _.throttle(function (event) {
-        _state.lastMouseX = event.pageX;
-        _state.lastMouseY = event.pageY;
-      }, 50)).on('mousemove', '.ui-virtual-select--item', onlyIfMousePositionChanged(function (event) {
-        var activeItemIndex = $(event.currentTarget).data('index');
-        if (activeItemIndex !== _state.activeItemIndex) {
-          _state.activeItemIndex = activeItemIndex;
-          renderer.render(_state);
-        }
-      })).on('click', '.ui-virtual-select--item', function (event) {
-        var targetState = cancel(_state);
-        targetState.selectedItemIndex = $(event.currentTarget).data('index'); // TODO probably needs adjustmnts for jquery event filtering
-        renderer.render(targetState);
-      });
-    }
+        // rendering the search input causes a blur event, which in return
+        // triggers another rendering cycle. in order for that to work, the state
+        // needs to be updated beforehand. i don't really like that, but am
+        // currently out of ideas on how to fix it.
+        state = targetState;
 
-    var _dom = initDOM(element, options);
-    var _renderer = new Renderer(_dom, _options);
+        containerComponent.render(targetState);
+        loadingIndicatorComponent.render(targetState);
+        optionListComponent.render(targetState);
+        searchInputComponent.render(targetState);
+      }
 
-    initDOMEventHandlers(_dom, _state, _options, _renderer);
-
-    function changeState(state) {
-      _state = $.extend({}, state);
-      _renderer.render(_state);
-    }
-
-    changeState(_state);
+      changeState(state);
+    })();
   }
 
   return {
-    setters: [function (_c) {
+    setters: [function (_) {
+      LoadingIndicator = _['default'];
+    }, function (_2) {
+      SearchInput = _2['default'];
+    }, function (_3) {
+      OptionList = _3['default'];
+    }, function (_c) {
       _Promise = _c['default'];
-    }, function (_d) {
-      $ = _d['default'];
     }, function (_e) {
-      Renderer = _e['default'];
+      $ = _e['default'];
+    }, function (_d) {
+      fn = _d['default'];
+    }, function (_f) {
+      Container = _f['default'];
     }],
     execute: function () {
       'use strict';
-
-      defaults = {
-        maxVisibleItems: 10,
-        maxRenderedItems: 30
-      };
-      Keys = {
-        ArrowUp: 38,
-        ArrowDown: 40,
-        Enter: 13,
-        Escape: 27,
-        Control: 17
-      };
 
       _export('default', VirtualSelect);
     }
   };
 });
-$__System.register('1', ['3d', '3f'], function (_export) {
+$__System.register('1', ['48', '3e'], function (_export) {
   'use strict';
 
-  var $, VirtualSelect, pluginName;
+  var VirtualSelect, $, pluginName;
   return {
-    setters: [function (_d) {
-      $ = _d['default'];
-    }, function (_f) {
-      VirtualSelect = _f['default'];
+    setters: [function (_) {
+      VirtualSelect = _['default'];
+    }, function (_e) {
+      $ = _e['default'];
     }],
     execute: function () {
       pluginName = 'virtualselect';

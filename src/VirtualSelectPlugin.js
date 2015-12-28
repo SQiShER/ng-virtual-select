@@ -1,235 +1,141 @@
 import $ from 'jquery';
-import Renderer from './Renderer.js';
+import fn from './core.js';
+import Container from './component.container.js';
+import LoadingIndicator from './component.loadingindicator.js';
+import SearchInput from './component.searchinput.js';
+import OptionList from './component.optionlist.js';
 
-const defaults = {
-  maxVisibleItems: 10,
-  maxRenderedItems: 30
-};
+function detectItemHeight() {
+  const $sampleItem = $('<div/>')
+    .addClass('ui-virtual-select--item')
+    .text('Text')
+    .hide()
+    .appendTo(document.body);
+  const height = $sampleItem.outerHeight();
+  $sampleItem.remove();
+  return height;
+}
 
-const Keys = {
-  ArrowUp: 38,
-  ArrowDown: 40,
-  Enter: 13,
-  Escape: 27,
-  Control: 17
-};
+function VirtualSelect(document, element, userOptions) {
 
-function VirtualSelect(document, element, options) {
+  const defaults = {
+    itemHeight: detectItemHeight(),
+    maxVisibleItems: 10,
+    maxRenderedItems: 30
+  };
 
-  const _options = $.extend({
-    itemHeight: detectItemHeight()
-  }, defaults, options);
+  const options = $.extend({}, defaults, userOptions);
 
-  let _state = {
+  let state = {
     activeItemIndex: 0,
+    selectedItem: null,
     selectedItemIndex: -1,
     query: '',
     itemsLoading: false,
     itemsLoaded: false,
-    open: false,
-    clickedOutsideElement: false,
-    lastMouseX: 0,
-    lastMouseY: 0
+    open: false
   };
 
-  function detectItemHeight() {
-    const $sampleItem = $('<div class="ui-virtual-select--item">Text</div>').hide().appendTo("body");
-    const height = $sampleItem.outerHeight();
-    $sampleItem.remove();
-    return height;
-  }
+  (function init() {
 
-  function indexOfItem(itemToFind = {}) {
-    const dataProvider = _options.dataProvider;
-    const itemToFindIdentity = dataProvider.identity(itemToFind);
-    return dataProvider.availableItems.findIndex(item => dataProvider.identity(item) === itemToFindIdentity);
-  }
+    const containerComponent = new Container(options);
 
-  function loadItems(state, options) {
-    if (state.itemsLoaded) {
-      return Promise.resolve();
-    } else {
-      state.itemsLoading = true;
-      return options.dataProvider.load().then(() => {
-        state.itemsLoading = false;
-        state.itemsLoaded = true;
-      });
-    }
-  }
-
-  function initDOM($element) {
-    const $container = $('<div/>').addClass('ui-virtual-select');
-    $element.empty().append($container);
-
-    const $searchInput = $('<input type="text"/>').addClass('ui-virtual-select--search-input');
-    const $loadingIndicator = $('<div/>').addClass('ui-virtual-select--loading-indicator').text('Loading...').hide();
-    const $items = $('<div/>').addClass('ui-virtual-select--items').css('overflow-y', 'scroll').hide();
-    $container.append($searchInput, $loadingIndicator, $items);
-
-    const $canvas = $('<div/>').addClass('ui-virtual-select--canvas');
-    $items.append($canvas);
-
-    return {
-      $element,
-      $searchInput,
-      $container,
-      $loadingIndicator,
-      $items,
-      $canvas
-    };
-  }
-
-  function startSelection(state) {
-    const selectedItemIndex = indexOfItem(state.selectedItem);
-    return $.extend(state, {
-      open: true,
-      activeItemIndex: selectedItemIndex >= 0 ? selectedItemIndex : 0,
-      selectedItemIndex
-    });
-  }
-
-  function activatePreviousItem(state) {
-    return $.extend(state, {
-      activeItemIndex: Math.max(state.activeItemIndex - 1, 0)
-    });
-  }
-
-  function activateNextItem(state, options) {
-    return $.extend(state, {
-      activeItemIndex: Math.min(state.activeItemIndex + 1, options.dataProvider.items.length - 1)
-    });
-  }
-
-  function cancel(state) {
-    return $.extend(state, {
-      open: false,
-      query: ''
-    });
-  }
-
-  function selectActiveItem(state) {
-    const targetState = cancel(state);
-    targetState.selectedItemIndex = targetState.activeItemIndex + state.firstRenderedItemIndex;
-    return targetState;
-  }
-
-  function toggleExtendedMode(state) {
-    return $.extend(state, {
-      extendedModeEnabled: !state.extendedModeEnabled
-    });
-  }
-
-  function changeQuery(state, query) {
-    if (query !== state.query) {
-      return $.extend(state, {
-        query: query,
-        activeItemIndex: 0
-      });
-    } else {
-      return state;
-    }
-  }
-
-  function initDOMEventHandlers(dom, state, options, renderer) {
-
-    function noop() {
-    }
-
-    function onlyAfterClickOutside(callback) {
-      return function() {
-        return _state.clickedOutsideElement ? callback() : noop();
-      };
-    }
-
-    function onlyIfMousePositionChanged(callback) {
-      return function(event) {
-        // workaround to prevent scripted scrolling from triggering mousemove events
-        const {lastMouseX: previousX, lastMouseY: previousY} = _state;
-        const {pageX: currentX, pageY: currentY} = event;
-        return (currentX !== previousX || currentY !== previousY) ? callback(event) : noop();
-      };
-    }
-
-    $(document).on('mousedown', function(event) {
-      _state.clickedOutsideElement = !$.contains(element[0], event.target);
-    });
-
-    dom.$searchInput
-      .on('focus', function() {
-        loadItems(_state, options).then(function() {
-          const targetState = startSelection(_state);
-          renderer.render(targetState);
+    const searchInputComponent = new SearchInput(options)
+      .on('focus', () => {
+        console.log('focus');
+        loadItems(state, options).then(() => {
+          const targetState = fn.startSelection(state, options);
+          changeState(targetState);
         });
-        renderer.render(_state);
       })
-      .on('keydown', function(event) {
-        const key = event.which;
-        switch (key) {
-          case Keys.ArrowUp:
-            renderer.render(activatePreviousItem(_state, options));
-            break;
-          case Keys.ArrowDown:
-            renderer.render(activateNextItem(_state, options));
-            break;
-          case Keys.Enter:
-            renderer.render(selectActiveItem(_state, options));
-            break;
-          case Keys.Escape:
-            renderer.render(cancel(_state, options));
-            break;
-          case Keys.Control:
-            renderer.render(toggleExtendedMode(_state, options));
-            break;
-          default:
-            _state.clickedOutsideElement = true;
-            renderer.render(_state);
-            break;
-        }
+      .on('blur', () => {
+        console.log('blur');
+        const targetState = fn.cancelSelection(state, options);
+        changeState(targetState);
       })
-      .on('blur', onlyAfterClickOutside(function() {
-        const targetState = cancel(_state, options);
-        renderer.render(targetState);
-      }))
-      .on('keyup', function(event) {
-        const query = $(event.target).val();
-        const targetState = changeQuery(_state, query);
-        renderer.render(targetState);
+      .on('activate_previous_item', () => {
+        console.log('activate_previous_item');
+        const targetState = fn.activatePreviousItem(state, options);
+        changeState(targetState);
+      })
+      .on('activate_next_item', () => {
+        console.log('activate_next_item');
+        const targetState = fn.activateNextItem(state, options);
+        changeState(targetState);
+      })
+      .on('select_active_item', () => {
+        console.log('select_active_item');
+        const targetState = fn.selectActiveItem(state, options);
+        changeState(targetState);
+      })
+      .on('cancel_selection', () => {
+        console.log('cancel_selection');
+        const targetState = fn.cancelSelection(state, options);
+        changeState(targetState);
+      })
+      .on('toggle_extended_mode', () => {
+        console.log('toggle_extended_mode');
+        const targetState = fn.toggleExtendedMode(state, options);
+        changeState(targetState);
+      })
+      .on('change', query => {
+        console.log('change');
+        const targetState = fn.changeQuery(state, options, query);
+        changeState(targetState);
       });
 
-    dom.$items.on('scroll', _.throttle(() => {
-      renderer.render();
-    }, 10));
+    const loadingIndicatorComponent = new LoadingIndicator(options);
 
-    dom.$canvas
-      .on('mousemove', _.throttle(event => {
-        _state.lastMouseX = event.pageX;
-        _state.lastMouseY = event.pageY;
-      }, 50))
-      .on('mousemove', '.ui-virtual-select--item', onlyIfMousePositionChanged(function(event) {
-        const activeItemIndex = $(event.currentTarget).data('index');
-        if (activeItemIndex !== _state.activeItemIndex) {
-          _state.activeItemIndex = activeItemIndex;
-          renderer.render(_state);
-        }
-      }))
-      .on('click', '.ui-virtual-select--item', function(event) {
-        const targetState = cancel(_state);
-        targetState.selectedItemIndex = $(event.currentTarget).data('index'); // TODO probably needs adjustmnts for jquery event filtering
-        renderer.render(targetState);
+    const optionListComponent = new OptionList(options)
+      .on('select', index => {
+        console.log('select');
+        const targetState = fn.selectItemAtIndex(state, options, index);
+        changeState(targetState);
+      })
+      .on('activate', index => {
+        console.log('activate');
+        const targetState = fn.activateItemAtIndex(state, options, index);
+        changeState(targetState);
       });
-  }
 
-  const _dom = initDOM(element, options);
-  const _renderer = new Renderer(_dom, _options);
+    const $searchInput = searchInputComponent.element;
+    const $loadingIndicator = loadingIndicatorComponent.element;
+    const $optionList = optionListComponent.element;
+    const $container = containerComponent.element;
+    $container.append($searchInput, $loadingIndicator, $optionList);
+    element.empty().append($container);
 
-  initDOMEventHandlers(_dom, _state, _options, _renderer);
+    function loadItems(state, options) {
+      if (state.itemsLoaded) {
+        return Promise.resolve();
+      } else {
+        const targetState = fn.startLoading(state);
+        changeState(targetState);
+        return options.dataProvider.load().then(() => {
+          const targetState = fn.finishLoading(state);
+          changeState(targetState);
+        });
+      }
+    }
 
-  function changeState(state) {
-    _state = $.extend({}, state);
-    _renderer.render(_state);
-  }
+    function changeState(targetState) {
 
-  changeState(_state);
+      // rendering the search input causes a blur event, which in return
+      // triggers another rendering cycle. in order for that to work, the state
+      // needs to be updated beforehand. i don't really like that, but am
+      // currently out of ideas on how to fix it.
+      state = targetState;
+
+      containerComponent.render(targetState);
+      loadingIndicatorComponent.render(targetState);
+      optionListComponent.render(targetState);
+      searchInputComponent.render(targetState);
+
+    }
+
+    changeState(state);
+
+  })();
 
 }
 
