@@ -1,18 +1,19 @@
 import $ from 'jquery';
-import noop from './noop.js';
+import _ from 'lodash';
+import noop from '../common/noop.js';
 
 function OptionList(options) {
   this.options = options;
   this.channels = {
     select: noop,
-    activate: noop
+    activate: noop,
   };
   this.lastMouseX = NaN;
   this.lastMouseY = NaN;
   this.init();
 }
 
-OptionList.prototype.onlyIfMousePositionChanged = function(callback) {
+OptionList.prototype.onlyIfMousePositionChanged = function onlyIfMousePositionChanged(callback) {
   return event => {
     // workaround to prevent scripted scrolling from triggering mousemove events
     const {lastMouseX: previousX, lastMouseY: previousY} = this;
@@ -21,17 +22,17 @@ OptionList.prototype.onlyIfMousePositionChanged = function(callback) {
   };
 };
 
-OptionList.prototype.on = function(channel, callback) {
+OptionList.prototype.on = function on(channel, callback) {
   this.channels[channel] = callback ? callback : noop;
   return this;
 };
 
-OptionList.prototype.init = function() {
+OptionList.prototype.init = function init() {
   const $items = $('<div/>')
     .addClass('ui-virtual-select--items')
     .css('overflow-y', 'scroll')
     .on('scroll', _.throttle(() => {
-      this.render();
+      this.render(this.renderedState);
     }, 10))
     .on('mousemove', event => {
       this.lastMouseX = event.pageX;
@@ -40,7 +41,6 @@ OptionList.prototype.init = function() {
     .on('mousedown', event => {
       /* prevent blur event when clicking options */
       if ($.contains($items.get(0), event.target)) {
-        console.log('preventing default');
         event.preventDefault();
       }
     })
@@ -52,25 +52,20 @@ OptionList.prototype.init = function() {
     .on('mousemove', '.ui-virtual-select--item', this.onlyIfMousePositionChanged(event => {
       const index = $(event.currentTarget).data('index');
       if (index !== this.renderedState.activeItemIndex) {
-        this.channels['activate'](index);
+        this.channels.activate(index);
       }
     }))
     .on('click', '.ui-virtual-select--item', event => {
       const index = $(event.currentTarget).data('index');
-      this.channels['select'](index);
+      this.channels.select(index);
     });
 
   this.element = this.$items = $items;
   this.$canvas = $canvas;
 };
 
-OptionList.prototype.render = function(state) {
-
+OptionList.prototype.render = function init(state) {
   const self = this;
-
-  if (arguments.length === 0) {
-    state = this.renderedState;
-  }
 
   // toggle open state and class
   if (state.open) {
@@ -80,7 +75,6 @@ OptionList.prototype.render = function(state) {
   }
 
   if (state.open) {
-
     // adjust first item
     const scrollPosition = this.$items.scrollTop();
     const firstRenderedItemIndex = Math.max(Math.floor(scrollPosition / this.options.itemHeight) - this.options.maxVisibleItems, 0);
@@ -88,7 +82,7 @@ OptionList.prototype.render = function(state) {
     // update items height
     const itemsElementHeight = Math.min(this.options.maxVisibleItems, this.options.dataProvider.items.length) * this.options.itemHeight;
     this.$items.css({
-      height: `${itemsElementHeight}px`
+      height: `${itemsElementHeight}px`,
     });
 
     // update canvas size
@@ -97,7 +91,7 @@ OptionList.prototype.render = function(state) {
     const canvasElementHeight = this.options.dataProvider.items.length * this.options.itemHeight - firstVisibleItemIndex * this.options.itemHeight;
     this.$canvas.css({
       'height': `${canvasElementHeight}px`,
-      'margin-top': `${canvasElementMarginTop}px`
+      'margin-top': `${canvasElementMarginTop}px`,
     });
 
     // adjust scroll position
@@ -133,8 +127,8 @@ OptionList.prototype.render = function(state) {
     this.$canvas.children('.ui-virtual-select--item').slice(items.length).remove();
 
     // update text
-    this.$canvas.children('.ui-virtual-select--item').each(function() {
-      const $itemElement = $(this);
+    this.$canvas.children('.ui-virtual-select--item').each((index, element) => {
+      const $itemElement = $(element);
       const item = $itemElement.data('item');
       const displayText = self.options.dataProvider.displayText(item, state.extendedModeEnabled);
       if ($itemElement.text() !== displayText) {
@@ -144,22 +138,21 @@ OptionList.prototype.render = function(state) {
   }
 
   // change active class
-  this.$canvas.children('.ui-virtual-select--item').each(function() {
-    const $itemElement = $(this);
-    const index = $itemElement.data('index');
+  this.$canvas.children('.ui-virtual-select--item').each((index, element) => {
+    const $itemElement = $(element);
+    const itemIndex = $itemElement.data('index');
     const hasActiveClass = $itemElement.hasClass('active');
-    if (index === state.activeItemIndex && !hasActiveClass) {
+    if (itemIndex === state.activeItemIndex && !hasActiveClass) {
       $itemElement.addClass('active');
     }
-    if (index !== state.activeItemIndex && hasActiveClass) {
+    if (itemIndex !== state.activeItemIndex && hasActiveClass) {
       $itemElement.removeClass('active');
     }
   });
 
   // update state with rendered one
-  // this.renderedState = state;
-  this.renderedState = $.extend({}, state);
-
+  this.renderedState = state;
+// this.renderedState = $.extend({}, state);
 };
 
 export default OptionList;

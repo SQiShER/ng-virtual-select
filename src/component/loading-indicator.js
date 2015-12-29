@@ -6,15 +6,14 @@ function LoadingIndicator(options) {
   this.init();
 }
 
-LoadingIndicator.prototype.init = function() {
+LoadingIndicator.prototype.init = function init() {
   this.element = this.$loadingIndicator = $('<div/>')
     .addClass('ui-virtual-select--loading-indicator')
     .text('Loading...')
     .hide();
 };
 
-LoadingIndicator.prototype.render = function(state) {
-
+LoadingIndicator.prototype.render = function render(state) {
   // toggle loading indicator and class
   if (state.itemsLoading) {
     this.$loadingIndicator.show();
@@ -22,9 +21,7 @@ LoadingIndicator.prototype.render = function(state) {
     this.$loadingIndicator.hide();
   }
 
-  // this.renderedState = state;
-  this.renderedState = $.extend({}, state);
-
+  this.renderedState = state;
 };
 
 export default LoadingIndicator;

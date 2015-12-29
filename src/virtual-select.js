@@ -1,9 +1,9 @@
 import $ from 'jquery';
-import fn from './core.js';
-import Container from './component.container.js';
-import LoadingIndicator from './component.loadingindicator.js';
-import SearchInput from './component.searchinput.js';
-import OptionList from './component.optionlist.js';
+import fn from './core/functions';
+import Container from './component/container';
+import LoadingIndicator from './component/loading-indicator';
+import SearchInput from './component/search-input';
+import OptionList from './component/option-list';
 
 function detectItemHeight() {
   const $sampleItem = $('<div/>')
@@ -16,12 +16,11 @@ function detectItemHeight() {
   return height;
 }
 
-function VirtualSelect(document, element, userOptions) {
-
+function VirtualSelect(element, userOptions) {
   const defaults = {
     itemHeight: detectItemHeight(),
     maxVisibleItems: 10,
-    maxRenderedItems: 30
+    maxRenderedItems: 30,
   };
 
   const options = $.extend({}, defaults, userOptions);
@@ -33,25 +32,19 @@ function VirtualSelect(document, element, userOptions) {
     query: '',
     itemsLoading: false,
     itemsLoaded: false,
-    open: false
+    open: false,
   };
 
-  (function init() {
-
+  const refresh = (function init() {
     const containerComponent = new Container(options);
 
     const searchInputComponent = new SearchInput(options)
       .on('focus', () => {
         console.log('focus');
-        loadItems(state, options).then(() => {
+        loadItems().then(() => {
           const targetState = fn.startSelection(state, options);
           changeState(targetState);
         });
-      })
-      .on('blur', () => {
-        console.log('blur');
-        const targetState = fn.cancelSelection(state, options);
-        changeState(targetState);
       })
       .on('activate_previous_item', () => {
         console.log('activate_previous_item');
@@ -105,38 +98,53 @@ function VirtualSelect(document, element, userOptions) {
     $container.append($searchInput, $loadingIndicator, $optionList);
     element.empty().append($container);
 
-    function loadItems(state, options) {
+    function loadItems() {
       if (state.itemsLoaded) {
         return Promise.resolve();
-      } else {
-        const targetState = fn.startLoading(state);
-        changeState(targetState);
-        return options.dataProvider.load().then(() => {
-          const targetState = fn.finishLoading(state);
-          changeState(targetState);
-        });
       }
+      changeState(fn.startLoading(state));
+      return options.dataProvider.load().then(() => {
+        changeState(fn.finishLoading(state));
+      });
     }
 
     function changeState(targetState) {
-
-      // rendering the search input causes a blur event, which in return
+      // FIXME: rendering the search input causes a blur event, which in return
       // triggers another rendering cycle. in order for that to work, the state
       // needs to be updated beforehand. i don't really like that, but am
       // currently out of ideas on how to fix it.
       state = targetState;
 
+      // FIXME: this lends itself to be extracted into a separate "render" function
       containerComponent.render(targetState);
       loadingIndicatorComponent.render(targetState);
       optionListComponent.render(targetState);
       searchInputComponent.render(targetState);
-
     }
 
-    changeState(state);
-
+    return () => changeState(state);
   })();
 
+  this.select = function select(item) {
+    console.debug('selection changed from outside:', item);
+    state = $.extend({}, state, {
+      selectedItem: item,
+    });
+    refresh();
+  };
+
+  this.focus = function focus() {
+    // TODO
+    console.debug('focussed from outside');
+  };
+
+  this.load = function load() {
+    console.debug('loading triggered from outside');
+  // TODO
+  // loadItems();
+  };
+
+  refresh();
 }
 
 export default VirtualSelect;

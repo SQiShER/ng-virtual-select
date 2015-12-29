@@ -11,12 +11,13 @@
     "no-console": 0,
     "array-bracket-spacing": [2, "never"],
     "no-use-before-define": [2, "nofunc"],
-    "no-unused-vars": 2
+    "no-unused-vars": 2,
+    "max-len": [2, 100, 4]
   },
   "env": {
     "browser": true,
     "es6": true,
     "jquery": true
   },
-  "extends": "eslint:recommended"
+  "extends": "airbnb/base"
 }

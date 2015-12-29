@@ -8,25 +8,25 @@ function startSelection(state, {dataProvider}) {
   return $.extend({}, state, {
     open: true,
     activeItemIndex: selectedItemIndex >= 0 ? selectedItemIndex : 0,
-    selectedItemIndex
+    selectedItemIndex,
   });
 }
 
 function activatePreviousItem(state) {
   return $.extend({}, state, {
-    activeItemIndex: Math.max(state.activeItemIndex - 1, 0)
+    activeItemIndex: Math.max(state.activeItemIndex - 1, 0),
   });
 }
 
 function activateNextItem(state, options) {
   return $.extend({}, state, {
-    activeItemIndex: Math.min(state.activeItemIndex + 1, options.dataProvider.items.length - 1)
+    activeItemIndex: Math.min(state.activeItemIndex + 1, options.dataProvider.items.length - 1),
   });
 }
 
 function activateItemAtIndex(state, options, index) {
   return $.extend({}, state, {
-    activeItemIndex: index
+    activeItemIndex: index,
   });
 }
 
@@ -38,6 +38,9 @@ function cancelSelection(state, options) {
 
 function selectItemAtIndex(state, options, index) {
   const selectedItem = options.dataProvider.items[index];
+
+  // notify the outside world about the selection
+  options.onSelect(selectedItem);
 
   // the index must be adjusted to represent the item in the availableItems array
   const selectedItemIndex = selectedItem ? options.dataProvider.availableItems.findIndex(item => {
@@ -57,7 +60,7 @@ function selectActiveItem(state, options) {
 
 function toggleExtendedMode(state) {
   return $.extend({}, state, {
-    extendedModeEnabled: !state.extendedModeEnabled
+    extendedModeEnabled: !state.extendedModeEnabled,
   });
 }
 
@@ -66,23 +69,22 @@ function changeQuery(state, options, query) {
     options.dataProvider.filter(query);
     return $.extend({}, state, {
       query: query,
-      activeItemIndex: 0
+      activeItemIndex: 0,
     });
-  } else {
-    return state;
   }
+  return state;
 }
 
 function startLoading(state) {
   return $.extend({}, state, {
-    itemsLoading: true
+    itemsLoading: true,
   });
 }
 
 function finishLoading(state) {
   return $.extend({}, state, {
     itemsLoading: false,
-    itemsLoaded: true
+    itemsLoaded: true,
   });
 }
 
@@ -97,7 +99,7 @@ const actions = {
   selectActiveItem,
   toggleExtendedMode,
   startLoading,
-  finishLoading
+  finishLoading,
 };
 
 export default actions;

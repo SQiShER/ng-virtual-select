@@ -15,7 +15,7 @@ DataProvider.prototype.load = function() {
       for (var i = 1; i < 1000; i++) {
         self.availableItems.push({
           id: '' + i,
-          name: '' + i
+          name: '' + i,
         });
       }
       self.items = self.availableItems;
@@ -27,7 +27,7 @@ DataProvider.prototype.load = function() {
 DataProvider.prototype.filter = function(search) {
   if (search.length > 0) {
     this.items = _.filter(this.availableItems, function(item) {
-      return item.name.indexOf(search) == 0;
+      return item.name.indexOf(search) === 0;
     });
   } else {
     this.items = this.availableItems;
@@ -60,7 +60,18 @@ $(document).ready(function() {
     dataProvider: dataProvider,
     onSelect: function(item) {
       $('.virtual-select--selection').text(JSON.stringify(item));
-    }
+    },
+  });
+
+  $('#select').click(function() {
+    $('.virtual-select').virtualselect('select', {
+      "id": "5",
+      "name": "5",
+    });
+  });
+
+  $('#focus').click(function() {
+    $('.virtual-select').virtualselect('focus');
   });
 
 });
