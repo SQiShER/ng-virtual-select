@@ -1,14 +1,20 @@
 import $ from 'jquery';
 
+function indexOfItem(dataProvider, item) {
+  if (!item) {
+    return -1;
+  }
+  const itemIdentity = dataProvider.identity(item);
+  return dataProvider.availableItems.findIndex(availableItem => {
+    return dataProvider.identity(availableItem) === itemIdentity;
+  });
+}
+
 function startSelection(state, {dataProvider}) {
-  const {availableItems: items} = dataProvider;
-  const selectedItemIndex = state.selectedItem ? items.findIndex(item => {
-    return dataProvider.identity(item) === dataProvider.identity(state.selectedItem);
-  }) : -1;
+  const selectedItemIndex = indexOfItem(dataProvider, state.selectedItem);
   return $.extend({}, state, {
     open: true,
     activeItemIndex: selectedItemIndex >= 0 ? selectedItemIndex : 0,
-    selectedItemIndex,
   });
 }
 
@@ -38,18 +44,17 @@ function cancelSelection(state, options) {
 
 function selectItemAtIndex(state, options, index) {
   const selectedItem = options.dataProvider.items[index];
+  return selectItem(state, options, selectedItem);
+}
 
+function selectItem(state, options, item) {
   // notify the outside world about the selection
-  options.onSelect(selectedItem);
-
-  // the index must be adjusted to represent the item in the availableItems array
-  const selectedItemIndex = selectedItem ? options.dataProvider.availableItems.findIndex(item => {
-    return options.dataProvider.identity(item) === options.dataProvider.identity(selectedItem);
-  }) : -1;
+  if (options.onSelect) {
+    options.onSelect(item);
+  }
 
   const targetState = cancelSelection(state, options);
-  targetState.selectedItem = selectedItem;
-  targetState.selectedItemIndex = selectedItemIndex;
+  targetState.selectedItem = item;
   return targetState;
 }
 
@@ -96,6 +101,7 @@ const actions = {
   activatePreviousItem,
   activateNextItem,
   selectItemAtIndex,
+  selectItem,
   selectActiveItem,
   toggleExtendedMode,
   startLoading,

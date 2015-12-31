@@ -88,4 +88,8 @@ SearchInput.prototype.render = function render(state) {
   this.renderedState = $.extend({}, state);
 };
 
+SearchInput.prototype.focus = function focus() {
+  this.$searchInputElement.focus();
+};
+
 export default SearchInput;

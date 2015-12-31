@@ -74,4 +74,8 @@ $(document).ready(function() {
     $('.virtual-select').virtualselect('focus');
   });
 
+  $('#fetch').click(function() {
+    $('.virtual-select').virtualselect('load');
+  });
+
 });

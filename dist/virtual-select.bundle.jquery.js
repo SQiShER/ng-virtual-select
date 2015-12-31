@@ -1947,17 +1947,23 @@ $__System.register('3a', ['3b'], function (_export) {
 
   var $, actions;
 
+  function indexOfItem(dataProvider, item) {
+    if (!item) {
+      return -1;
+    }
+    var itemIdentity = dataProvider.identity(item);
+    return dataProvider.availableItems.findIndex(function (availableItem) {
+      return dataProvider.identity(availableItem) === itemIdentity;
+    });
+  }
+
   function startSelection(state, _ref) {
     var dataProvider = _ref.dataProvider;
-    var items = dataProvider.availableItems;
 
-    var selectedItemIndex = state.selectedItem ? items.findIndex(function (item) {
-      return dataProvider.identity(item) === dataProvider.identity(state.selectedItem);
-    }) : -1;
+    var selectedItemIndex = indexOfItem(dataProvider, state.selectedItem);
     return $.extend({}, state, {
       open: true,
-      activeItemIndex: selectedItemIndex >= 0 ? selectedItemIndex : 0,
-      selectedItemIndex: selectedItemIndex
+      activeItemIndex: selectedItemIndex >= 0 ? selectedItemIndex : 0
     });
   }
 
@@ -1987,18 +1993,17 @@ $__System.register('3a', ['3b'], function (_export) {
 
   function selectItemAtIndex(state, options, index) {
     var selectedItem = options.dataProvider.items[index];
+    return selectItem(state, options, selectedItem);
+  }
 
+  function selectItem(state, options, item) {
     // notify the outside world about the selection
-    options.onSelect(selectedItem);
-
-    // the index must be adjusted to represent the item in the availableItems array
-    var selectedItemIndex = selectedItem ? options.dataProvider.availableItems.findIndex(function (item) {
-      return options.dataProvider.identity(item) === options.dataProvider.identity(selectedItem);
-    }) : -1;
+    if (options.onSelect) {
+      options.onSelect(item);
+    }
 
     var targetState = cancelSelection(state, options);
-    targetState.selectedItem = selectedItem;
-    targetState.selectedItemIndex = selectedItemIndex;
+    targetState.selectedItem = item;
     return targetState;
   }
 
@@ -2050,6 +2055,7 @@ $__System.register('3a', ['3b'], function (_export) {
         activatePreviousItem: activatePreviousItem,
         activateNextItem: activateNextItem,
         selectItemAtIndex: selectItemAtIndex,
+        selectItem: selectItem,
         selectActiveItem: selectActiveItem,
         toggleExtendedMode: toggleExtendedMode,
         startLoading: startLoading,
@@ -2344,6 +2350,10 @@ $__System.register('42', ['40', '41', '43', '3b'], function (_export) {
 
         // FIXME: Not sure why I need the copy here
         this.renderedState = $.extend({}, state);
+      };
+
+      SearchInput.prototype.focus = function focus() {
+        this.$searchInputElement.focus();
       };
 
       _export('default', SearchInput);
@@ -7009,105 +7019,105 @@ $__System.register('4a', ['39', '42', '49', '3b', '3a', '3c', '3d'], function (_
     var state = {
       activeItemIndex: 0,
       selectedItem: null,
-      selectedItemIndex: -1,
       query: '',
       itemsLoading: false,
       itemsLoaded: false,
       open: false
     };
 
-    var refresh = (function init() {
-      var containerComponent = new Container(options);
+    var containerComponent = new Container(options);
 
-      var searchInputComponent = new SearchInput(options).on('focus', function () {
-        console.log('focus');
-        loadItems(state, options).then(function () {
-          var targetState = fn.startSelection(state, options);
-          changeState(targetState);
-        });
-      }).on('activate_previous_item', function () {
-        console.log('activate_previous_item');
-        var targetState = fn.activatePreviousItem(state, options);
-        changeState(targetState);
-      }).on('activate_next_item', function () {
-        console.log('activate_next_item');
-        var targetState = fn.activateNextItem(state, options);
-        changeState(targetState);
-      }).on('select_active_item', function () {
-        console.log('select_active_item');
-        var targetState = fn.selectActiveItem(state, options);
-        changeState(targetState);
-      }).on('cancel_selection', function () {
-        console.log('cancel_selection');
-        var targetState = fn.cancelSelection(state, options);
-        changeState(targetState);
-      }).on('toggle_extended_mode', function () {
-        console.log('toggle_extended_mode');
-        var targetState = fn.toggleExtendedMode(state, options);
-        changeState(targetState);
-      }).on('change', function (query) {
-        console.log('change');
-        var targetState = fn.changeQuery(state, options, query);
+    var searchInputComponent = new SearchInput(options).on('focus', function () {
+      console.log('focus');
+      loadItems().then(function () {
+        var targetState = fn.startSelection(state, options);
         changeState(targetState);
       });
+    }).on('activate_previous_item', function () {
+      console.log('activate_previous_item');
+      var targetState = fn.activatePreviousItem(state, options);
+      changeState(targetState);
+    }).on('activate_next_item', function () {
+      console.log('activate_next_item');
+      var targetState = fn.activateNextItem(state, options);
+      changeState(targetState);
+    }).on('select_active_item', function () {
+      console.log('select_active_item');
+      var targetState = fn.selectActiveItem(state, options);
+      changeState(targetState);
+    }).on('cancel_selection', function () {
+      console.log('cancel_selection');
+      var targetState = fn.cancelSelection(state, options);
+      changeState(targetState);
+    }).on('toggle_extended_mode', function () {
+      console.log('toggle_extended_mode');
+      var targetState = fn.toggleExtendedMode(state, options);
+      changeState(targetState);
+    }).on('change', function (query) {
+      console.log('change');
+      var targetState = fn.changeQuery(state, options, query);
+      changeState(targetState);
+    });
 
-      var loadingIndicatorComponent = new LoadingIndicator(options);
+    var loadingIndicatorComponent = new LoadingIndicator(options);
 
-      var optionListComponent = new OptionList(options).on('select', function (index) {
-        console.log('select');
-        var targetState = fn.selectItemAtIndex(state, options, index);
-        changeState(targetState);
-      }).on('activate', function (index) {
-        console.log('activate');
-        var targetState = fn.activateItemAtIndex(state, options, index);
-        changeState(targetState);
+    var optionListComponent = new OptionList(options).on('select', function (index) {
+      console.log('select');
+      var targetState = fn.selectItemAtIndex(state, options, index);
+      changeState(targetState);
+    }).on('activate', function (index) {
+      console.log('activate');
+      var targetState = fn.activateItemAtIndex(state, options, index);
+      changeState(targetState);
+    });
+
+    var $searchInput = searchInputComponent.element;
+    var $loadingIndicator = loadingIndicatorComponent.element;
+    var $optionList = optionListComponent.element;
+    var $container = containerComponent.element;
+    $container.append($searchInput, $loadingIndicator, $optionList);
+    element.empty().append($container);
+
+    function loadItems() {
+      if (state.itemsLoaded) {
+        return _Promise.resolve();
+      }
+      changeState(fn.startLoading(state));
+      return options.dataProvider.load().then(function () {
+        changeState(fn.finishLoading(state));
       });
+    }
 
-      var $searchInput = searchInputComponent.element;
-      var $loadingIndicator = loadingIndicatorComponent.element;
-      var $optionList = optionListComponent.element;
-      var $container = containerComponent.element;
-      $container.append($searchInput, $loadingIndicator, $optionList);
-      element.empty().append($container);
+    function changeState(targetState) {
+      // FIXME: rendering the search input causes a blur event, which in return
+      // triggers another rendering cycle. in order for that to work, the state
+      // needs to be updated beforehand. i don't really like that, but am
+      // currently out of ideas on how to fix it.
+      state = targetState;
 
-      function loadItems() {
-        if (state.itemsLoaded) {
-          return _Promise.resolve();
-        }
-        changeState(fn.startLoading(state));
-        return options.dataProvider.load().then(function () {
-          changeState(fn.finishLoading(state));
-        });
-      }
-
-      function changeState(targetState) {
-        // FIXME: rendering the search input causes a blur event, which in return
-        // triggers another rendering cycle. in order for that to work, the state
-        // needs to be updated beforehand. i don't really like that, but am
-        // currently out of ideas on how to fix it.
-        state = targetState;
-
-        // FIXME: this lends itself to be extracted into a separate "render" function
-        containerComponent.render(targetState);
-        loadingIndicatorComponent.render(targetState);
-        optionListComponent.render(targetState);
-        searchInputComponent.render(targetState);
-      }
-
-      return function () {
-        return changeState(state);
-      };
-    })();
+      // FIXME: this lends itself to be extracted into a separate "render" function
+      containerComponent.render(targetState);
+      loadingIndicatorComponent.render(targetState);
+      optionListComponent.render(targetState);
+      searchInputComponent.render(targetState);
+    }
 
     this.select = function select(item) {
       console.debug('selection changed from outside:', item);
-      state = $.extend({}, state, {
-        selectedItem: item
-      });
-      refresh();
+      changeState(fn.selectItem(state, options, item));
     };
 
-    refresh();
+    this.focus = function focus() {
+      console.debug('focussed from outside');
+      searchInputComponent.focus();
+    };
+
+    this.load = function load() {
+      console.debug('loading triggered from outside');
+      loadItems();
+    };
+
+    changeState(state);
   }
 
   return {
@@ -7146,32 +7156,29 @@ $__System.register('1', ['3b', '4a'], function (_export) {
     execute: function () {
       pluginName = 'virtualselect';
 
-      $.fn[pluginName] = function Plugin() {
-        var _arguments = arguments,
-            _this = this;
+      $.fn[pluginName] = function Plugin(optionsOrMethodName) {
+        for (var _len = arguments.length, args = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+          args[_key - 1] = arguments[_key];
+        }
 
         var pluginId = 'plugin_' + pluginName;
-        if (typeof arguments[0] === 'object') {
-          var _ret = (function () {
-            var options = _arguments[0];
-            return {
-              v: _this.each(function (index, element) {
-                if (!$.data(element, pluginId)) {
-                  $.data(element, pluginId, new VirtualSelect($(element), options));
-                }
-              })
-            };
-          })();
 
-          if (typeof _ret === 'object') return _ret.v;
-        } else if (arguments[0] === 'select') {
-          return this.each(function (index, element) {
-            var plugin = $.data(element, pluginId);
-            if (plugin) {
-              plugin.select(_arguments[1]);
+        return this.each(function (index, element) {
+          var plugin = $.data(element, pluginId);
+          if (typeof optionsOrMethodName === 'object') {
+            if (plugin) return;
+
+            var options = optionsOrMethodName;
+            $.data(element, pluginId, new VirtualSelect($(element), options));
+          } else if (typeof optionsOrMethodName === 'string') {
+            if (!plugin) return;
+
+            var methodName = optionsOrMethodName;
+            if (plugin[methodName]) {
+              plugin[methodName].apply(plugin, args);
             }
-          });
-        } else if (arguments[0] === 'focus') {}
+          }
+        });
       };
     }
   };
