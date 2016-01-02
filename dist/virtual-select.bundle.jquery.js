@@ -1942,7 +1942,58 @@ $__System.registerDynamic("39", ["38"], true, function($__require, exports, modu
   return module.exports;
 });
 
-$__System.register('3a', ['3b'], function (_export) {
+$__System.registerDynamic("3a", [], true, function($__require, exports, module) {
+  ;
+  var global = this,
+      __define = global.define;
+  global.define = undefined;
+  "format cjs";
+  (function(globals) {
+    if (Array.prototype.findIndex)
+      return;
+    var findIndex = function(predicate) {
+      var list = Object(this);
+      var length = Math.max(0, list.length) >>> 0;
+      if (length === 0)
+        return -1;
+      if (typeof predicate !== 'function' || Object.prototype.toString.call(predicate) !== '[object Function]') {
+        throw new TypeError('Array#findIndex: predicate must be a function');
+      }
+      var thisArg = arguments.length > 1 ? arguments[1] : undefined;
+      for (var i = 0; i < length; i++) {
+        if (predicate.call(thisArg, list[i], i, list))
+          return i;
+      }
+      return -1;
+    };
+    if (Object.defineProperty) {
+      try {
+        Object.defineProperty(Array.prototype, 'findIndex', {
+          value: findIndex,
+          configurable: true,
+          writable: true
+        });
+      } catch (e) {}
+    }
+    if (!Array.prototype.findIndex) {
+      Array.prototype.findIndex = findIndex;
+    }
+  }(this));
+  global.define = __define;
+  return module.exports;
+});
+
+$__System.registerDynamic("3b", ["3a"], true, function($__require, exports, module) {
+  ;
+  var global = this,
+      __define = global.define;
+  global.define = undefined;
+  module.exports = $__require('3a');
+  global.define = __define;
+  return module.exports;
+});
+
+$__System.register('3c', ['3b', '3d'], function (_export) {
   'use strict';
 
   var $, actions;
@@ -2043,8 +2094,8 @@ $__System.register('3a', ['3b'], function (_export) {
   }
 
   return {
-    setters: [function (_b) {
-      $ = _b['default'];
+    setters: [function (_b) {}, function (_d) {
+      $ = _d['default'];
     }],
     execute: function () {
       actions = {
@@ -2066,7 +2117,7 @@ $__System.register('3a', ['3b'], function (_export) {
     }
   };
 });
-$__System.register('3c', ['3b'], function (_export) {
+$__System.register('3e', ['3d'], function (_export) {
   'use strict';
 
   var $;
@@ -2077,8 +2128,8 @@ $__System.register('3c', ['3b'], function (_export) {
   }
 
   return {
-    setters: [function (_b) {
-      $ = _b['default'];
+    setters: [function (_d) {
+      $ = _d['default'];
     }],
     execute: function () {
       Container.prototype.init = function init() {
@@ -2105,7 +2156,7 @@ $__System.register('3c', ['3b'], function (_export) {
     }
   };
 });
-$__System.register('3d', ['3b'], function (_export) {
+$__System.register('3f', ['3d'], function (_export) {
   'use strict';
 
   var $;
@@ -2117,8 +2168,8 @@ $__System.register('3d', ['3b'], function (_export) {
   }
 
   return {
-    setters: [function (_b) {
-      $ = _b['default'];
+    setters: [function (_d) {
+      $ = _d['default'];
     }],
     execute: function () {
       LoadingIndicator.prototype.init = function init() {
@@ -2162,7 +2213,7 @@ $__System.registerDynamic("e", [], true, function($__require, exports, module) {
   return module.exports;
 });
 
-$__System.registerDynamic("3e", ["e"], true, function($__require, exports, module) {
+$__System.registerDynamic("40", ["e"], true, function($__require, exports, module) {
   ;
   var global = this,
       __define = global.define;
@@ -2175,26 +2226,26 @@ $__System.registerDynamic("3e", ["e"], true, function($__require, exports, modul
   return module.exports;
 });
 
-$__System.registerDynamic("3f", ["3e"], true, function($__require, exports, module) {
+$__System.registerDynamic("41", ["40"], true, function($__require, exports, module) {
   ;
   var global = this,
       __define = global.define;
   global.define = undefined;
   module.exports = {
-    "default": $__require('3e'),
+    "default": $__require('40'),
     __esModule: true
   };
   global.define = __define;
   return module.exports;
 });
 
-$__System.registerDynamic("40", ["3f"], true, function($__require, exports, module) {
+$__System.registerDynamic("42", ["41"], true, function($__require, exports, module) {
   "use strict";
   ;
   var global = this,
       __define = global.define;
   global.define = undefined;
-  var _Object$defineProperty = $__require('3f')["default"];
+  var _Object$defineProperty = $__require('41')["default"];
   exports["default"] = function(obj, key, value) {
     if (key in obj) {
       _Object$defineProperty(obj, key, {
@@ -2213,7 +2264,7 @@ $__System.registerDynamic("40", ["3f"], true, function($__require, exports, modu
   return module.exports;
 });
 
-$__System.register("41", [], function (_export) {
+$__System.register("43", [], function (_export) {
   "use strict";
 
   var CursorUp, CursorDown, Enter, Escape, Control;
@@ -2242,7 +2293,7 @@ $__System.register("41", [], function (_export) {
     }
   };
 });
-$__System.register('42', ['40', '41', '43', '3b'], function (_export) {
+$__System.register('44', ['42', '43', '45', '3d'], function (_export) {
   var _defineProperty, CursorUp, CursorDown, Escape, Enter, Control, noop, $, CHANNEL_FOCUS, CHANNEL_FILTER, CHANNEL_NEXT, CHANNEL_PREVIOUS, CHANNEL_SELECT_ACTIVE, CHANNEL_CANCEL, CHANNEL_TOGGLE_EXTENDED_MODE;
 
   function SearchInput(options) {
@@ -2265,8 +2316,8 @@ $__System.register('42', ['40', '41', '43', '3b'], function (_export) {
       Control = _3.Control;
     }, function (_2) {
       noop = _2['default'];
-    }, function (_b) {
-      $ = _b['default'];
+    }, function (_d) {
+      $ = _d['default'];
     }],
     execute: function () {
       'use strict';
@@ -2360,7 +2411,7 @@ $__System.register('42', ['40', '41', '43', '3b'], function (_export) {
     }
   };
 });
-$__System.register("3b", [], function (_export) {
+$__System.register("3d", [], function (_export) {
   "use strict";
 
   return {
@@ -2370,7 +2421,7 @@ $__System.register("3b", [], function (_export) {
     }
   };
 });
-$__System.registerDynamic("44", [], true, function($__require, exports, module) {
+$__System.registerDynamic("46", [], true, function($__require, exports, module) {
   ;
   var global = this,
       __define = global.define;
@@ -2462,27 +2513,7 @@ $__System.registerDynamic("44", [], true, function($__require, exports, module) 
   return module.exports;
 });
 
-$__System.registerDynamic("45", ["44"], true, function($__require, exports, module) {
-  ;
-  var global = this,
-      __define = global.define;
-  global.define = undefined;
-  module.exports = $__require('44');
-  global.define = __define;
-  return module.exports;
-});
-
-$__System.registerDynamic("46", ["45"], true, function($__require, exports, module) {
-  ;
-  var global = this,
-      __define = global.define;
-  global.define = undefined;
-  module.exports = $__System._nodeRequire ? process : $__require('45');
-  global.define = __define;
-  return module.exports;
-});
-
-$__System.registerDynamic("2e", ["46"], true, function($__require, exports, module) {
+$__System.registerDynamic("47", ["46"], true, function($__require, exports, module) {
   ;
   var global = this,
       __define = global.define;
@@ -2492,7 +2523,27 @@ $__System.registerDynamic("2e", ["46"], true, function($__require, exports, modu
   return module.exports;
 });
 
-$__System.registerDynamic("47", ["2e"], true, function($__require, exports, module) {
+$__System.registerDynamic("48", ["47"], true, function($__require, exports, module) {
+  ;
+  var global = this,
+      __define = global.define;
+  global.define = undefined;
+  module.exports = $__System._nodeRequire ? process : $__require('47');
+  global.define = __define;
+  return module.exports;
+});
+
+$__System.registerDynamic("2e", ["48"], true, function($__require, exports, module) {
+  ;
+  var global = this,
+      __define = global.define;
+  global.define = undefined;
+  module.exports = $__require('48');
+  global.define = __define;
+  return module.exports;
+});
+
+$__System.registerDynamic("49", ["2e"], true, function($__require, exports, module) {
   ;
   var global = this,
       __define = global.define;
@@ -6806,17 +6857,17 @@ $__System.registerDynamic("47", ["2e"], true, function($__require, exports, modu
   return module.exports;
 });
 
-$__System.registerDynamic("48", ["47"], true, function($__require, exports, module) {
+$__System.registerDynamic("4a", ["49"], true, function($__require, exports, module) {
   ;
   var global = this,
       __define = global.define;
   global.define = undefined;
-  module.exports = $__require('47');
+  module.exports = $__require('49');
   global.define = __define;
   return module.exports;
 });
 
-$__System.register("43", [], function (_export) {
+$__System.register("45", [], function (_export) {
   "use strict";
 
   function noop() {}
@@ -6828,10 +6879,10 @@ $__System.register("43", [], function (_export) {
     }
   };
 });
-$__System.register('49', ['43', '48', '3b'], function (_export) {
+$__System.register('4b', ['45', '3d', '4a'], function (_export) {
   'use strict';
 
-  var noop, _, $;
+  var noop, $, _;
 
   function OptionList(options) {
     this.options = options;
@@ -6844,13 +6895,61 @@ $__System.register('49', ['43', '48', '3b'], function (_export) {
     this.init();
   }
 
+  function calculateItemsElementHeight(options) {
+    var maxVisibleItems = options.maxVisibleItems;
+    var dataProvider = options.dataProvider;
+    var itemHeight = options.itemHeight;
+
+    return Math.min(maxVisibleItems, dataProvider.items.length) * itemHeight;
+  }
+
+  // FIXME: one of these two functions doesn't do what it says. but which one?
+  function calculateFirstRenderedItemIndex(options, scrollPosition) {
+    var itemHeight = options.itemHeight;
+    var maxVisibleItems = options.maxVisibleItems;
+
+    return Math.max(Math.floor(scrollPosition / itemHeight) - maxVisibleItems, 0);
+  }
+  function calculateFirstVisibleItemIndex(options, scrollPosition) {
+    var itemHeight = options.itemHeight;
+    var maxVisibleItems = options.maxVisibleItems;
+
+    return Math.max(Math.floor(scrollPosition / itemHeight) - maxVisibleItems, 0);
+  }
+
+  function calculateCanvasElementHeight(options, scrollPosition) {
+    var firstVisibleItemIndex = calculateFirstVisibleItemIndex(options, scrollPosition);
+    var dataProvider = options.dataProvider;
+    var itemHeight = options.itemHeight;
+
+    return dataProvider.items.length * itemHeight - firstVisibleItemIndex * itemHeight;
+  }
+
+  function calculateCanvasElementMarginTop(options, scrollPosition) {
+    var firstVisibleItemIndex = calculateFirstVisibleItemIndex(options, scrollPosition);
+    return firstVisibleItemIndex * options.itemHeight;
+  }
+
+  function calculateCanvasSize(options) {
+    var dataProvider = options.dataProvider;
+    var maxVisibleItems = options.maxVisibleItems;
+    var itemHeight = options.itemHeight;
+
+    return Math.min(dataProvider.items.length, maxVisibleItems) * itemHeight;
+  }
+
+  function getItemsToRender(options, scrollPosition) {
+    var firstRenderedItemIndex = calculateFirstRenderedItemIndex(options, scrollPosition);
+    return options.dataProvider.get(firstRenderedItemIndex, firstRenderedItemIndex + options.maxRenderedItems);
+  }
+
   return {
-    setters: [function (_3) {
-      noop = _3['default'];
-    }, function (_2) {
-      _ = _2['default'];
-    }, function (_b) {
-      $ = _b['default'];
+    setters: [function (_2) {
+      noop = _2['default'];
+    }, function (_d) {
+      $ = _d['default'];
+    }, function (_a) {
+      _ = _a['default'];
     }],
     execute: function () {
       OptionList.prototype.onlyIfMousePositionChanged = function onlyIfMousePositionChanged(callback) {
@@ -6899,9 +6998,7 @@ $__System.register('49', ['43', '48', '3b'], function (_export) {
 
         this.element = this.$items = $items;
         this.$canvas = $canvas;
-      };
-
-      OptionList.prototype.render = function init(state) {
+      };OptionList.prototype.render = function init(state) {
         var _this3 = this;
 
         var self = this;
@@ -6917,18 +7014,17 @@ $__System.register('49', ['43', '48', '3b'], function (_export) {
           (function () {
             // adjust first item
             var scrollPosition = _this3.$items.scrollTop();
-            var firstRenderedItemIndex = Math.max(Math.floor(scrollPosition / _this3.options.itemHeight) - _this3.options.maxVisibleItems, 0);
+            var firstRenderedItemIndex = calculateFirstRenderedItemIndex(_this3.options, scrollPosition);
 
             // update items height
-            var itemsElementHeight = Math.min(_this3.options.maxVisibleItems, _this3.options.dataProvider.items.length) * _this3.options.itemHeight;
+            var itemsElementHeight = calculateItemsElementHeight(_this3.options);
             _this3.$items.css({
               height: itemsElementHeight + 'px'
             });
 
             // update canvas size
-            var firstVisibleItemIndex = Math.max(Math.floor(_this3.$items.scrollTop() / _this3.options.itemHeight) - _this3.options.maxVisibleItems, 0);
-            var canvasElementMarginTop = firstVisibleItemIndex * _this3.options.itemHeight;
-            var canvasElementHeight = _this3.options.dataProvider.items.length * _this3.options.itemHeight - firstVisibleItemIndex * _this3.options.itemHeight;
+            var canvasElementMarginTop = calculateCanvasElementMarginTop(_this3.options, scrollPosition);
+            var canvasElementHeight = calculateCanvasElementHeight(_this3.options, scrollPosition);
             _this3.$canvas.css({
               'height': canvasElementHeight + 'px',
               'margin-top': canvasElementMarginTop + 'px'
@@ -6936,7 +7032,7 @@ $__System.register('49', ['43', '48', '3b'], function (_export) {
 
             // adjust scroll position
             if (state.activeItemIndex !== _this3.renderedState.activeItemIndex || !_this3.renderedState.open) {
-              var canvasSize = Math.min(_this3.options.dataProvider.items.length, _this3.options.maxVisibleItems) * _this3.options.itemHeight;
+              var canvasSize = calculateCanvasSize(_this3.options);
               var targetScrollPosition = state.activeItemIndex * _this3.options.itemHeight;
               var a1 = Math.ceil(scrollPosition / _this3.options.itemHeight) * _this3.options.itemHeight;
               var a2 = Math.floor(scrollPosition / _this3.options.itemHeight) * _this3.options.itemHeight + canvasSize;
@@ -6948,7 +7044,7 @@ $__System.register('49', ['43', '48', '3b'], function (_export) {
             }
 
             // get items to render
-            var items = _this3.options.dataProvider.get(firstRenderedItemIndex, firstRenderedItemIndex + _this3.options.maxRenderedItems);
+            var items = getItemsToRender(_this3.options, scrollPosition);
 
             // create dom elements if necessary
             items.forEach(function (item, index) {
@@ -6997,8 +7093,8 @@ $__System.register('49', ['43', '48', '3b'], function (_export) {
     }
   };
 });
-$__System.register('4a', ['39', '42', '49', '3b', '3a', '3c', '3d'], function (_export) {
-  var _Promise, SearchInput, OptionList, $, fn, Container, LoadingIndicator;
+$__System.register('4c', ['39', '44', '3d', '3c', '3e', '3f', '4b'], function (_export) {
+  var _Promise, SearchInput, $, fn, Container, LoadingIndicator, OptionList;
 
   function detectItemHeight() {
     var $sampleItem = $('<div/>').addClass('ui-virtual-select--item').text('Text').hide().appendTo(document.body);
@@ -7125,16 +7221,16 @@ $__System.register('4a', ['39', '42', '49', '3b', '3a', '3c', '3d'], function (_
       _Promise = _['default'];
     }, function (_2) {
       SearchInput = _2['default'];
-    }, function (_3) {
-      OptionList = _3['default'];
-    }, function (_b) {
-      $ = _b['default'];
-    }, function (_a) {
-      fn = _a['default'];
-    }, function (_c) {
-      Container = _c['default'];
     }, function (_d) {
-      LoadingIndicator = _d['default'];
+      $ = _d['default'];
+    }, function (_c) {
+      fn = _c['default'];
+    }, function (_e) {
+      Container = _e['default'];
+    }, function (_f) {
+      LoadingIndicator = _f['default'];
+    }, function (_b) {
+      OptionList = _b['default'];
     }],
     execute: function () {
       'use strict';
@@ -7143,15 +7239,15 @@ $__System.register('4a', ['39', '42', '49', '3b', '3a', '3c', '3d'], function (_
     }
   };
 });
-$__System.register('1', ['3b', '4a'], function (_export) {
+$__System.register('1', ['3d', '4c'], function (_export) {
   'use strict';
 
   var $, VirtualSelect, pluginName;
   return {
-    setters: [function (_b) {
-      $ = _b['default'];
-    }, function (_a) {
-      VirtualSelect = _a['default'];
+    setters: [function (_d) {
+      $ = _d['default'];
+    }, function (_c) {
+      VirtualSelect = _c['default'];
     }],
     execute: function () {
       pluginName = 'virtualselect';

@@ -64,6 +64,42 @@ OptionList.prototype.init = function init() {
   this.$canvas = $canvas;
 };
 
+function calculateItemsElementHeight(options) {
+  const {maxVisibleItems, dataProvider, itemHeight} = options;
+  return Math.min(maxVisibleItems, dataProvider.items.length) * itemHeight;
+}
+
+// FIXME: one of these two functions doesn't do what it says. but which one?
+function calculateFirstRenderedItemIndex(options, scrollPosition) {
+  const {itemHeight, maxVisibleItems} = options;
+  return Math.max(Math.floor(scrollPosition / itemHeight) - maxVisibleItems, 0);
+}
+function calculateFirstVisibleItemIndex(options, scrollPosition) {
+  const {itemHeight, maxVisibleItems} = options;
+  return Math.max(Math.floor(scrollPosition / itemHeight) - maxVisibleItems, 0);
+}
+
+function calculateCanvasElementHeight(options, scrollPosition) {
+  const firstVisibleItemIndex = calculateFirstVisibleItemIndex(options, scrollPosition);
+  const {dataProvider, itemHeight} = options;
+  return dataProvider.items.length * itemHeight - firstVisibleItemIndex * itemHeight;
+}
+
+function calculateCanvasElementMarginTop(options, scrollPosition) {
+  const firstVisibleItemIndex = calculateFirstVisibleItemIndex(options, scrollPosition);
+  return firstVisibleItemIndex * options.itemHeight;
+}
+
+function calculateCanvasSize(options) {
+  const {dataProvider, maxVisibleItems, itemHeight} = options;
+  return Math.min(dataProvider.items.length, maxVisibleItems) * itemHeight;
+}
+
+function getItemsToRender(options, scrollPosition) {
+  const firstRenderedItemIndex = calculateFirstRenderedItemIndex(options, scrollPosition);
+  return options.dataProvider.get(firstRenderedItemIndex, firstRenderedItemIndex + options.maxRenderedItems);
+}
+
 OptionList.prototype.render = function init(state) {
   const self = this;
 
@@ -77,18 +113,17 @@ OptionList.prototype.render = function init(state) {
   if (state.open) {
     // adjust first item
     const scrollPosition = this.$items.scrollTop();
-    const firstRenderedItemIndex = Math.max(Math.floor(scrollPosition / this.options.itemHeight) - this.options.maxVisibleItems, 0);
+    const firstRenderedItemIndex = calculateFirstRenderedItemIndex(this.options, scrollPosition);
 
     // update items height
-    const itemsElementHeight = Math.min(this.options.maxVisibleItems, this.options.dataProvider.items.length) * this.options.itemHeight;
+    const itemsElementHeight = calculateItemsElementHeight(this.options);
     this.$items.css({
       height: `${itemsElementHeight}px`,
     });
 
     // update canvas size
-    const firstVisibleItemIndex = Math.max(Math.floor(this.$items.scrollTop() / this.options.itemHeight) - this.options.maxVisibleItems, 0);
-    const canvasElementMarginTop = firstVisibleItemIndex * this.options.itemHeight;
-    const canvasElementHeight = this.options.dataProvider.items.length * this.options.itemHeight - firstVisibleItemIndex * this.options.itemHeight;
+    const canvasElementMarginTop = calculateCanvasElementMarginTop(this.options, scrollPosition);
+    const canvasElementHeight = calculateCanvasElementHeight(this.options, scrollPosition);
     this.$canvas.css({
       'height': `${canvasElementHeight}px`,
       'margin-top': `${canvasElementMarginTop}px`,
@@ -96,7 +131,7 @@ OptionList.prototype.render = function init(state) {
 
     // adjust scroll position
     if (state.activeItemIndex !== this.renderedState.activeItemIndex || !this.renderedState.open) {
-      const canvasSize = Math.min(this.options.dataProvider.items.length, this.options.maxVisibleItems) * this.options.itemHeight;
+      const canvasSize = calculateCanvasSize(this.options);
       const targetScrollPosition = state.activeItemIndex * this.options.itemHeight;
       const a1 = Math.ceil(scrollPosition / this.options.itemHeight) * this.options.itemHeight;
       const a2 = Math.floor(scrollPosition / this.options.itemHeight) * this.options.itemHeight + canvasSize;
@@ -108,7 +143,7 @@ OptionList.prototype.render = function init(state) {
     }
 
     // get items to render
-    const items = this.options.dataProvider.get(firstRenderedItemIndex, firstRenderedItemIndex + this.options.maxRenderedItems);
+    const items = getItemsToRender(this.options, scrollPosition);
 
     // create dom elements if necessary
     items.forEach((item, index) => {

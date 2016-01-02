@@ -4,25 +4,40 @@
 module.exports = function(config) {
   config.set({
 
+    plugins: [
+      'karma-phantomjs-shim',
+      'karma-mocha',
+      'karma-jspm',
+      'karma-spec-reporter',
+      'karma-phantomjs-launcher',
+      'karma-chai',
+      'karma-ng-html2js-preprocessor',
+      'karma-jquery-chai',
+      'karma-chai-sinon',
+      'karma-chai-as-promised',
+    ],
+
+
     // base path that will be used to resolve all patterns (eg. files, exclude)
     basePath: '',
 
 
     // frameworks to use
     // available frameworks: https://npmjs.org/browse/keyword/karma-adapter
-    frameworks: ['chai-sinon', 'jquery-chai', 'chai-as-promised', 'chai', 'mocha'],
+    frameworks: [
+      'chai-sinon',
+      'jquery-chai',
+      'chai-as-promised',
+      'chai',
+      'jspm',
+      'mocha',
+      'phantomjs-shim',
+    ],
 
 
     // list of files / patterns to load in the browser
     files: [
-      'https://cdnjs.cloudflare.com/ajax/libs/lodash.js/3.5.0/lodash.min.js',
       'https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js',
-      'https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.4.7/angular.min.js',
-      'https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.4.7/angular-mocks.js',
-      'node_modules/babel-polyfill/dist/polyfill.js',
-      'src/*.js',
-      'src/*.html',
-      'test/*.spec.js'
     ],
 
 
@@ -32,11 +47,7 @@ module.exports = function(config) {
 
     // preprocess matching files before serving them to the browser
     // available preprocessors: https://npmjs.org/browse/keyword/karma-preprocessor
-    preprocessors: {
-      'src/*.html': ['ng-html2js'],
-      'src/*.js': ['babel'],
-      'test/*.js': ['babel']
-    },
+    preprocessors: {},
 
 
     // test results reporter to use
@@ -55,7 +66,7 @@ module.exports = function(config) {
 
     // level of logging
     // possible values: config.LOG_DISABLE || config.LOG_ERROR || config.LOG_WARN || config.LOG_INFO || config.LOG_DEBUG
-    logLevel: config.LOG_INFO,
+    logLevel: config.LOG_WARN,
 
 
     // enable / disable watching file and executing tests whenever any file changes
@@ -71,43 +82,26 @@ module.exports = function(config) {
     // if true, Karma captures browsers, runs the tests and exits
     singleRun: false,
 
+
     // Concurrency level
     // how many browser should be started simultanous
     concurrency: Infinity,
 
 
-    ngHtml2JsPreprocessor: {
-      // strip this from the file path
-      stripPrefix: 'src/',
-    },
-
-
-    babelPreprocessor: {
-      options: {
-        presets: ['es2015'],
-        sourceMap: 'inline'
-      }
-    // ,
-    // filename: function(file) {
-    //   return file.originalPath.replace(/\.js$/, '.es5.js');
-    // },
-    // sourceFileName: function(file) {
-    //   return file.originalPath;
-    // }
+    jspm: {
+      loadFiles: ['test/**/*.spec.js'],
+      serveFiles: ['src/**/*.js'],
     },
 
 
     specReporter: {
-      suppressSkipped: true
+      suppressSkipped: true,
     },
 
 
-    // client: {
-    //   captureConsole: true,
-    //   mocha: {
-    //     bail: true
-    //   }
-    // }
+    client: {
+      captureConsole: false,
+    },
 
-  })
-}
+  });
+};

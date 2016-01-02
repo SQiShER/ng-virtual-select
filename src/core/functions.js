@@ -1,3 +1,4 @@
+import 'array.prototype.findindex';
 import $ from 'jquery';
 
 function indexOfItem(dataProvider, item) {

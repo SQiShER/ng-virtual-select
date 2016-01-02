@@ -1,12 +1,13 @@
-'use strict';
+import 'src/virtual-select.jquery';
+import { CursorUp, CursorDown, Enter, Escape } from 'src/common/keys';
 
-describe.only(`virtualselect`, () => {
-  const Enter = 13;
-  const CursorUp = 38;
-  const CursorDown = 40;
-  const Escape = 27;
+describe(`virtualselect`, () => {
+  let element;
+  let options;
 
-  let element, options;
+  function container() {
+    return element.find('.ui-virtual-select');
+  }
 
   function searchInput() {
     return element.find('.ui-virtual-select--search-input');
@@ -21,20 +22,20 @@ describe.only(`virtualselect`, () => {
   }
 
   function triggerKeydownEventOn(target, which) {
-    const event = jQuery.Event('keydown');
+    const event = new jQuery.Event('keydown');
     event.which = which;
     target.trigger(event);
   }
 
   beforeEach(() => {
     const availableItems = [];
-    for (var i = 0; i < 40; i++) {
+    for (let i = 0; i < 40; i++) {
       availableItems.push(i);
     }
     element = $(`<div class="test-container"></div>`);
     options = {
+      onSelect: sinon.stub(),
       itemHeight: 30,
-      selectedItem: 15,
       dataProvider: {
         availableItems,
         load() {
@@ -51,26 +52,31 @@ describe.only(`virtualselect`, () => {
           return `Item ${item}`;
         },
         filter(query) {
-          this.items = this.availableItems.filter((item) => item == query)
+          this.items = this.availableItems.filter((item) => item == query); // eslint-disable-line eqeqeq
         },
-        onSelect: sinon.stub()
-      }
+        noSelectionText() {
+          return 'Please choose';
+        },
+      },
     };
     element.virtualselect(options);
+    element.virtualselect('select', 15);
     element.appendTo(document.body);
   });
   afterEach(() => {
     element.remove();
   });
   describe(`initially`, () => {
-    it(`should display the selected items display text as placeholder`);
+    it(`should display the selected items display text as placeholder`, () => {
+      expect(searchInput()).to.have.attr('placeholder', options.dataProvider.displayText(15));
+    });
   });
   describe(`on search input focus`, () => {
     it(`should display the loading indicator until data is loaded`, (done) => {
       searchInput().focus();
       expect(loadingIndicator()).to.be.visible;
       expect(items()).not.to.be.visible;
-      setTimeout(function() {
+      setTimeout(() => {
         expect(loadingIndicator()).not.to.be.visible;
         expect(items()).to.be.visible;
         done();
@@ -78,14 +84,14 @@ describe.only(`virtualselect`, () => {
     });
     it(`should show item list`, (done) => {
       searchInput().focus();
-      setTimeout(function() {
+      setTimeout(() => {
         expect(items()).to.be.visible;
         done();
       }, 0);
     });
     it(`should scroll item list to position of selected element`, (done) => {
       searchInput().focus();
-      setTimeout(function() {
+      setTimeout(() => {
         expect(items().scrollTop()).to.equal(15 * 30);
         done();
       }, 0);
@@ -119,7 +125,7 @@ describe.only(`virtualselect`, () => {
       it(`should render the first 30 options`, (done) => {
         items().scrollTop(0);
         // scrolling is throttled, so we have to wait for a short period of time
-        setTimeout(function() {
+        setTimeout(() => {
           for (let i = 0; i < 30; i++) {
             expect(element.find(`.ui-virtual-select--item:eq(${i})`)).to.have.text(`Item ${i}`);
           }
@@ -132,7 +138,7 @@ describe.only(`virtualselect`, () => {
       it(`should render the last 20 options`, (done) => {
         items().scrollTop(10000000);
         // scrolling is throttled, so we have to wait for a short period of time
-        setTimeout(function() {
+        setTimeout(() => {
           for (let i = 0; i < 20; i++) {
             expect(element.find(`.ui-virtual-select--item:eq(${i})`)).to.have.text(`Item ${i + 20}`);
           }
@@ -143,7 +149,7 @@ describe.only(`virtualselect`, () => {
       it(`should not have a scroll position larger than "number of options" * "option height"`, (done) => {
         items().scrollTop(10000000);
         // scrolling is throttled, so we have to wait for a short period of time
-        setTimeout(function() {
+        setTimeout(() => {
           expect(element.find(`.ui-virtual-select--items`).scrollTop()).to.equal(900);
           done();
         }, 20);
@@ -157,7 +163,7 @@ describe.only(`virtualselect`, () => {
       });
       it(`should not step over the last item`, () => {
         expect(element.find(`.ui-virtual-select--item.active`)).to.have.text('Item 15');
-        for (var i = 0; i < 100; i++) {
+        for (let i = 0; i < 100; i++) {
           triggerKeydownEventOn(searchInput(), CursorDown);
         }
         expect(element.find(`.ui-virtual-select--item.active`)).to.have.text('Item 39');
@@ -171,7 +177,7 @@ describe.only(`virtualselect`, () => {
       });
       it(`should not step over the first item`, () => {
         expect(element.find(`.ui-virtual-select--item.active`)).to.have.text('Item 15');
-        for (var i = 0; i < 100; i++) {
+        for (let i = 0; i < 100; i++) {
           triggerKeydownEventOn(searchInput(), CursorUp);
         }
         expect(element.find(`.ui-virtual-select--item.active`)).to.have.text('Item 0');
@@ -185,7 +191,7 @@ describe.only(`virtualselect`, () => {
       });
       it(`should notify the outside world via onSelect callback about the selection`, () => {
         element.find('.ui-virtual-select--item:eq(11)').click();
-        expect(options.dataProvider.onSelect).to.have.been.calledWith(16, 16);
+        expect(options.onSelect).to.have.been.calledWith(16);
       });
       it(`should hide the item list`, () => {
         expect(element.find('.ui-virtual-select--items')).to.be.visible;
@@ -212,7 +218,7 @@ describe.only(`virtualselect`, () => {
       it(`should notify the outside world via onSelect callback about the selection`, () => {
         triggerKeydownEventOn(searchInput(), CursorDown);
         triggerKeydownEventOn(searchInput(), Enter);
-        expect(options.dataProvider.onSelect).to.have.been.calledWith(16, 16);
+        expect(options.onSelect).to.have.been.calledWith(16);
       });
       it(`should hide the item list`, () => {
         expect(element.find('.ui-virtual-select--items')).to.be.visible;
@@ -234,7 +240,7 @@ describe.only(`virtualselect`, () => {
     it(`moving the mouse cursor over an item activates it`, (done) => {
       expect(element.find('.ui-virtual-select--item.active')).to.have.text('Item 15');
       element.find('.ui-virtual-select--item.active + .ui-virtual-select--item').trigger('mousemove');
-      setTimeout(function() {
+      setTimeout(() => {
         expect(element.find('.ui-virtual-select--item.active')).to.have.text('Item 16');
         done();
       }, 150);
@@ -245,15 +251,13 @@ describe.only(`virtualselect`, () => {
       expect(element.find('.ui-virtual-select--items')).to.be.hidden;
     });
     it(`entering text into the search input filters the options`, (done) => {
-      const event = jQuery.Event('keyup');
+      const event = new jQuery.Event('keyup');
       searchInput().val('1').trigger(event);
-      setTimeout(function() {
+      setTimeout(() => {
         expect(element.find('.ui-virtual-select--item')).to.have.length(1);
-        done()
+        done();
       }, 20);
     });
-    it(`can be focussed via external trigger`);
-    it(`can be caused to pre-load the data via external trigger`);
     it(`clicking outside the select component should cancel the selection`, () => {
       searchInput().val('2');
       expect(searchInput()).to.have.value('2');
@@ -262,5 +266,18 @@ describe.only(`virtualselect`, () => {
       expect(searchInput()).to.have.value('');
       expect(element.find('.ui-virtual-select--items')).to.be.hidden;
     });
+  });
+  it(`can be focussed via external trigger`, (done) => {
+    expect(container()).not.to.have.class('open');
+    element.virtualselect('focus');
+    setTimeout(() => {
+      expect(container()).to.have.class('open');
+      done();
+    }, 0);
+  });
+  it(`can be caused to pre-load the data via external trigger`, () => {
+    sinon.spy(options.dataProvider, 'load');
+    element.virtualselect('load');
+    expect(options.dataProvider.load).to.have.been.called;
   });
 });

@@ -37,7 +37,8 @@ class VirtualSelectComponentObject {
 }
 
 describe.skip(`$.fn.virtualselect`, () => {
-  let element, componentObject;
+  let element;
+  let componentObject;
 
   beforeEach(() => {
     element = $(`<div class="test-container"></div>`);
@@ -61,12 +62,12 @@ describe.skip(`$.fn.virtualselect`, () => {
       `.${componentObject.searchInputClass}`,
       `.${componentObject.loadingIndicatorClass}`,
       `.${componentObject.itemsClass}`,
-      `.${componentObject.canvasClass}`
+      `.${componentObject.canvasClass}`,
     ];
     element.virtualselect();
     descendants.forEach((descendant) => {
       element.should.have.descendants(descendant);
-    })
+    });
   });
 
   it(`should initially hide loading indicator`, () => {
@@ -84,10 +85,10 @@ describe.skip(`$.fn.virtualselect`, () => {
     beforeEach(() => {
       dataProvider = {
         load: sinon.stub().returns(new Promise(() => {
-        }))
+        })),
       };
       element.virtualselect({
-        dataProvider
+        dataProvider,
       });
     });
 
@@ -107,7 +108,6 @@ describe.skip(`$.fn.virtualselect`, () => {
     });
 
     describe(`and loading was successful`, () => {
-
       beforeEach(() => {
         dataProvider.load.returns(Promise.resolve());
         dataProvider.get = sinon.stub().returns([]);
@@ -169,26 +169,26 @@ describe.skip(`$.fn.virtualselect`, () => {
   describe(`given search input has focus and items have been successfully loaded`, () => {
     let dataProvider;
     beforeEach((done) => {
-      let items = [];
+      const items = [];
       for (let i = 0; i < 100; i++) {
-        items.push(i)
+        items.push(i);
       }
       dataProvider = {
         items,
         load: sinon.stub().returns(Promise.resolve()),
         get(firstIndex, endIndex) {
-          return this.items.slice(firstIndex, endIndex)
+          return this.items.slice(firstIndex, endIndex);
         },
         identity(item) {
           return item;
         },
         displayText(item) {
           return `Item ${item}`;
-        }
+        },
       };
       element.virtualselect({
         dataProvider,
-        itemHeight: 30
+        itemHeight: 30,
       });
       componentObject.searchInput.focus();
       setTimeout(done, 1);
@@ -216,11 +216,9 @@ describe.skip(`$.fn.virtualselect`, () => {
     it(`should scroll to the active item`);
     it(`should remove rendered items from the DOM when necessary`);
   });
-
 });
 
 describe('directive', () => {
-
   let Context;
 
   class MockOptionsProvider {
@@ -232,7 +230,8 @@ describe('directive', () => {
     load() {
       return this.deferredLoad.promise;
     }
-    resolveLoad(itemCount = 100) {
+    resolveLoad(itemCount) {
+      itemCount = itemCount || 100;
       class Item {
         constructor(id) {
           this.id = id;
@@ -240,7 +239,7 @@ describe('directive', () => {
           this.lastname = `Last${id}`;
         }
       }
-      let items = [];
+      const items = [];
       for (let i = 0; i < itemCount; i++) {
         items.push(new Item(i));
       }
@@ -265,7 +264,7 @@ describe('directive', () => {
       if (!item) {
         return '';
       }
-      let {firstname, lastname} = item;
+      const {firstname, lastname} = item;
       return `${lastname}, ${firstname}`;
     }
     noSelectionText() {
@@ -279,7 +278,7 @@ describe('directive', () => {
     Context = {
       '$compile': $compile,
       '$rootScope': $rootScope,
-      '$q': $q
+      '$q': $q,
     };
   }));
 
@@ -289,21 +288,21 @@ describe('directive', () => {
   });
 
   function createDirective({selection = null, optionsProvider = {}} = {}) {
-    let styleElement = $(`<style type="text/css">
+    const styleElement = $(`<style type="text/css">
     .ui-virtual-select--item {
       line-height: 16px;
       padding: 7px 0;
     }
     </style>`);
     $(document.head).append(styleElement);
-    let $element = angular.element('<ui-virtual-select ng-model="data.selection" ui-options-provider="data.optionsProvider" ui-on-loaded="data.loadCallback()"></ui-virtual-select>');
+    const $element = angular.element('<ui-virtual-select ng-model="data.selection" ui-options-provider="data.optionsProvider" ui-on-loaded="data.loadCallback()"></ui-virtual-select>');
     $(document.body).append($element);
-    let $scope = Context.$rootScope.$new();
+    const $scope = Context.$rootScope.$new();
     $scope.data = {
       selection: selection,
       optionsProvider: optionsProvider,
-      loadCallback: function() {}
-    }
+      loadCallback: function loadCallback() {},
+    };
     sinon.stub($scope.data, 'loadCallback');
     Context.$compile($element)($scope);
     Context.$element = $element;
@@ -320,23 +319,23 @@ describe('directive', () => {
       expect(Context.$element).to.have.descendants('.ui-virtual-select');
     });
     it('search input should display the selected value as placeholder text', () => {
-      let placeholderText = 'I always wanted to be a placeholder text!';
+      const placeholderText = 'I always wanted to be a placeholder text!';
       Context.$rootScope.$apply(() => {
         Context.$scope.data.selection = {
-          name: placeholderText
+          name: placeholderText,
         };
         Context.$scope.data.optionsProvider = {
-          displayText: function(item) {
+          displayText: function displayText(item) {
             return item.name;
-          }
+          },
         };
-      })
+      });
       expect(Context.$element.find('.ui-virtual-select--search-input')).to.have.attr('placeholder', placeholderText);
     });
   });
 
   describe('when search input has no focus,', () => {
-    beforeEach(function() {
+    beforeEach(() => {
       createDirective();
     });
     it(`container element should not have class "open"`, () => {
@@ -351,7 +350,7 @@ describe('directive', () => {
   });
 
   describe(`when search input gains focus`, () => {
-    beforeEach(function() {
+    beforeEach(() => {
       createDirective();
     });
     beforeEach(inject(($q) => {
@@ -438,7 +437,7 @@ describe('directive', () => {
     beforeEach(() => {
       optionsProvider = new MockOptionsProvider(Context.$q);
       createDirective({
-        optionsProvider: optionsProvider
+        optionsProvider: optionsProvider,
       });
       sinon.stub(optionsProvider, 'displayText');
       sinon.stub(optionsProvider, 'noSelectionText').returns(noSelectionText);
@@ -465,7 +464,7 @@ describe('directive', () => {
     beforeEach(inject(($q) => {
       optionsProvider = new MockOptionsProvider($q);
       createDirective({
-        optionsProvider: optionsProvider
+        optionsProvider: optionsProvider,
       });
       Context.$scope.$digest();
     }));

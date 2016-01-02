@@ -12,5 +12,8 @@
     "mocha": true,
 		"es6": true
 	},
-	"extends": "eslint:recommended"
+  "rules": {
+    "no-unused-expressions": 0,
+  },
+	"extends": "airbnb/base"
 }

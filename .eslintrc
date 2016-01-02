@@ -12,7 +12,7 @@
     "array-bracket-spacing": [2, "never"],
     "no-use-before-define": [2, "nofunc"],
     "no-unused-vars": 2,
-    "max-len": [2, 100, 4]
+    "max-len": [2, 120, 4]
   },
   "env": {
     "browser": true,
