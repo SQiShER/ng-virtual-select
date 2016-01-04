@@ -3,4 +3,4 @@ karma.conf.js
 protractor.conf.js
 package.json
 config.js
-demo-jquery/*
+demo/*

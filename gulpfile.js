@@ -7,59 +7,33 @@ const gulp = require('gulp'),
   del = require('del'),
   path = require('path'),
   jspm = require('gulp-jspm'),
+  rename = require('gulp-rename'),
   KarmaServer = require('karma').Server;
 
 const options = {
   tempDir: '.tmp/',
-  buildDir: 'dist/'
-}
+  buildDir: 'dist/',
+};
 
 gulp.task('css', () => {
   return gulp.src('src/*.css')
     .pipe(sourcemaps.init())
     .pipe(autoprefixer({
       browsers: ['last 2 versions'],
-      cascade: false
+      cascade: false,
     }))
     .pipe(sourcemaps.write('.'))
     .pipe(gulp.dest(options.buildDir));
 });
 
-gulp.task('templates', () => {
-  return gulp.src('src/ui-virtual-select.tpl.html')
-    .pipe(templateCache('ui-virtual-select.tpl.js', {
-      module: 'uiVirtualSelect'
-    }))
-    .pipe(gulp.dest(options.tempDir));
-});
-
-gulp.task('javascript', ['templates', 'javascript:jspm'], () => {
-  return gulp.src(['src/ui-virtual-select.js', options.tempDir + '/ui-virtual-select.tpl.js'])
-    .pipe(sourcemaps.init())
-    .pipe(concat('ui-virtual-select.js'))
-    .pipe(babel({
-      presets: ['es2015']
-    }))
-    .pipe(sourcemaps.write('.'))
-    .pipe(gulp.dest(options.buildDir));
-});
-
-gulp.task('javascript:jquery', () => {
-  return gulp.src(['src/virtual-select.jquery.js'])
-    .pipe(sourcemaps.init())
-    .pipe(babel({
-      presets: ['es2015']
-    }))
-    .pipe(sourcemaps.write('.'))
-    .pipe(gulp.dest(options.buildDir));
-});
-
-gulp.task('javascript:jspm', () => {
-  return gulp.src('src/virtual-select.jquery.js')
+gulp.task('javascript', () => {
+  return gulp.src('src/virtual-select-angular.js')
     .pipe(sourcemaps.init())
     .pipe(jspm({
-      selfExecutingBundle: true
+      selfExecutingBundle: true,
+    // minify: true,
     }))
+    .pipe(rename('virtual-select-angular.min.js'))
     .pipe(sourcemaps.write('.'))
     .pipe(gulp.dest(options.buildDir));
 });
@@ -68,14 +42,14 @@ gulp.task('test', (done) => {
   new KarmaServer({
     configFile: __dirname + '/karma.conf.js',
     singleRun: true,
-    browsers: ['PhantomJS']
+    browsers: ['PhantomJS'],
   }, done).start();
 });
 
 gulp.task('clean', () => {
   return del([
     options.buildDir,
-    options.tempDir
+    options.tempDir,
   ]);
 });
 
@@ -83,7 +57,7 @@ gulp.task('build', ['css', 'javascript']);
 
 gulp.task('develop', ['build'], () => {
   gulp.watch('src/**/*.css', ['css']);
-  gulp.watch(['src/**/*.js', 'src/**/*.tpl.html'], ['javascript']);
+  gulp.watch('src/**/*.js', ['javascript']);
 });
 
 gulp.task('release', ['build']);

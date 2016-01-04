@@ -3,12 +3,16 @@
 angular.module('app', ['uiVirtualSelect'])
 
   .controller('AppController', ['$scope', '$timeout', 'uiVirtualSelectDataProvider', function($scope, $timeout, uiVirtualSelectDataProvider) {
-    var intitialSelection = null;
+    var intitialSelection = {
+      id: '5',
+      name: '5',
+    };
     var self = this;
     this.selection = intitialSelection;
     this.uiVirtualSelectDataProvider = uiVirtualSelectDataProvider;
     this.resetSelection = function() {
       self.selection = intitialSelection;
+      console.log('resetting to', intitialSelection);
     };
     this.focusInput = function() {
       $scope.$broadcast('ui-virtual-select:focus');
@@ -30,6 +34,7 @@ angular.module('app', ['uiVirtualSelect'])
       this.availableItems = null;
       this.items = null;
     };
+
     DataProvider.prototype.load = function() {
       var deferred = $q.defer();
       var self = this;
@@ -41,7 +46,7 @@ angular.module('app', ['uiVirtualSelect'])
           for (var i = 1; i < 1000; i++) {
             self.availableItems.push({
               id: '' + i,
-              name: '' + i
+              name: '' + i,
             });
           }
           self.items = self.availableItems;
@@ -50,6 +55,7 @@ angular.module('app', ['uiVirtualSelect'])
       }
       return deferred.promise;
     };
+
     DataProvider.prototype.filter = function(search) {
       if (search.length > 0) {
         this.items = _.filter(this.availableItems, function(item) {
@@ -59,18 +65,17 @@ angular.module('app', ['uiVirtualSelect'])
         this.items = this.availableItems;
       }
     };
+
     DataProvider.prototype.get = function(firstItem, lastItem) {
       return this.items.slice(firstItem, lastItem);
     };
-    DataProvider.prototype.size = function() {
-      return this.items.length;
-    };
+
     DataProvider.prototype.identity = function(item) {
       return item.id;
     };
+
     DataProvider.prototype.displayText = function(item, extended) {
       if (item) {
-        console.log(extended);
         return extended ? item.name + ' (' + item.id + ')' : item.name;
       } else {
         return '';
@@ -79,5 +84,6 @@ angular.module('app', ['uiVirtualSelect'])
     DataProvider.prototype.noSelectionText = function() {
       return 'Please choose';
     };
+
     return new DataProvider();
   }]);
