@@ -4,7 +4,9 @@
   "description": "A searchable, themable, lazy-loading select component capable of handling thousands of options very efficiently by using the virtual scrolling technique. And magic.",
   "main": "index.js",
   "scripts": {
+    "init": "npm install && jspm install",
     "test": "gulp test",
+    "build": "gulp clean && gulp release",
     "karma": "karma start karma.conf.js"
   },
   "repository": {

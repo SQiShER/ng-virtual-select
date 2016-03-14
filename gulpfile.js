@@ -31,7 +31,7 @@ gulp.task('javascript', () => {
     .pipe(sourcemaps.init())
     .pipe(jspm({
       selfExecutingBundle: true,
-    // minify: true,
+      minify: true,
     }))
     .pipe(rename('virtual-select-angular.min.js'))
     .pipe(sourcemaps.write('.'))
