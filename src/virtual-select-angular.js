@@ -48,6 +48,11 @@ function VirtualSelectDirective() {
           });
         });
       },
+      onClose() {
+        scope.$evalAsync(() => {
+          uiVirtualSelectController.onCloseCallback();
+        });
+      },
       onLoaded() {
         uiVirtualSelectController.onLoadedCallback();
       },
