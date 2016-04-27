@@ -13,12 +13,12 @@ System.config({
   },
 
   map: {
-    "SQiShER/virtual-select": "github:SQiShER/virtual-select@1.0.5",
+    "SQiShER/virtual-select": "github:SQiShER/virtual-select@1.0.6",
     "babel": "npm:babel-core@5.8.38",
     "babel-runtime": "npm:babel-runtime@5.8.38",
     "core-js": "npm:core-js@1.2.6",
     "jquery": "src/adapter/jquery-adapter.js",
-    "github:SQiShER/virtual-select@1.0.5": {
+    "github:SQiShER/virtual-select@1.0.6": {
       "array.prototype.findindex": "npm:array.prototype.findindex@1.0.0",
       "lodash": "npm:lodash@3.10.1"
     },
