@@ -70,6 +70,10 @@ function VirtualSelectDirective() {
       virtualselect.load();
     });
 
+    scope.$on('ui-virtual-select:reload', () => {
+      virtualselect.reload();
+    });
+
     ngModelController.$render = () => {
       virtualselect.select(ngModelController.$viewValue);
     };
